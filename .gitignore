@@ -1,0 +1,17 @@
+## Carpetas de IDE
+.vs/
+.vscode/
+
+## Compilados
+[Bb]in/
+[Oo]bj/
+
+## Archivos de usuario (configuración local, no compartir)
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+
+## Otros temporales
+*.cache
+*.log

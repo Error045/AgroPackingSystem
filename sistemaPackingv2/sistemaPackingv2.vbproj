@@ -1,0 +1,660 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProjectGuid>{37665630-BD97-43A9-BBBD-C0F289C43D9E}</ProjectGuid>
+    <OutputType>WinExe</OutputType>
+    <StartupObject>sistemaPackingv2.My.MyApplication</StartupObject>
+    <RootNamespace>sistemaPackingv2</RootNamespace>
+    <AssemblyName>sistemaPackingv2</AssemblyName>
+    <FileAlignment>512</FileAlignment>
+    <MyType>WindowsForms</MyType>
+    <TargetFrameworkVersion>v4.7.2</TargetFrameworkVersion>
+    <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
+    <Deterministic>true</Deterministic>
+    <IsWebBootstrapper>false</IsWebBootstrapper>
+    <PublishUrl>C:\Users\gabri\OneDrive\Desktop\Sistema Packing_version beta\</PublishUrl>
+    <Install>true</Install>
+    <InstallFrom>Disk</InstallFrom>
+    <UpdateEnabled>false</UpdateEnabled>
+    <UpdateMode>Foreground</UpdateMode>
+    <UpdateInterval>7</UpdateInterval>
+    <UpdateIntervalUnits>Days</UpdateIntervalUnits>
+    <UpdatePeriodically>false</UpdatePeriodically>
+    <UpdateRequired>false</UpdateRequired>
+    <MapFileExtensions>true</MapFileExtensions>
+    <ApplicationRevision>16</ApplicationRevision>
+    <ApplicationVersion>1.0.0.%2a</ApplicationVersion>
+    <UseApplicationTrust>false</UseApplicationTrust>
+    <PublishWizardCompleted>true</PublishWizardCompleted>
+    <BootstrapperEnabled>true</BootstrapperEnabled>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <DefineDebug>true</DefineDebug>
+    <DefineTrace>true</DefineTrace>
+    <OutputPath>bin\Debug\</OutputPath>
+    <DocumentationFile>sistemaPackingv2.xml</DocumentationFile>
+    <NoWarn>42016,41999,42017,42018,42019,42032,42036,42020,42021,42022</NoWarn>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <DebugType>pdbonly</DebugType>
+    <DefineDebug>false</DefineDebug>
+    <DefineTrace>true</DefineTrace>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\Release\</OutputPath>
+    <DocumentationFile>sistemaPackingv2.xml</DocumentationFile>
+    <NoWarn>42016,41999,42017,42018,42019,42032,42036,42020,42021,42022</NoWarn>
+  </PropertyGroup>
+  <PropertyGroup>
+    <OptionExplicit>On</OptionExplicit>
+  </PropertyGroup>
+  <PropertyGroup>
+    <OptionCompare>Binary</OptionCompare>
+  </PropertyGroup>
+  <PropertyGroup>
+    <OptionStrict>Off</OptionStrict>
+  </PropertyGroup>
+  <PropertyGroup>
+    <OptionInfer>On</OptionInfer>
+  </PropertyGroup>
+  <PropertyGroup>
+    <ManifestCertificateThumbprint>D152AB525196BE83E572B9990D0D1600124E3300</ManifestCertificateThumbprint>
+  </PropertyGroup>
+  <PropertyGroup>
+    <ManifestKeyFile>sistemaPackingv2_TemporaryKey.pfx</ManifestKeyFile>
+  </PropertyGroup>
+  <PropertyGroup>
+    <GenerateManifests>true</GenerateManifests>
+  </PropertyGroup>
+  <PropertyGroup>
+    <SignManifests>true</SignManifests>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="BouncyCastle.Cryptography, Version=2.0.0.0, Culture=neutral, PublicKeyToken=072edcf4a5328938, processorArchitecture=MSIL">
+      <HintPath>..\packages\BouncyCastle.Cryptography.2.6.2\lib\net461\BouncyCastle.Cryptography.dll</HintPath>
+    </Reference>
+    <Reference Include="Google.Protobuf, Version=3.32.0.0, Culture=neutral, PublicKeyToken=a7d26565bac4d604, processorArchitecture=MSIL">
+      <HintPath>..\packages\Google.Protobuf.3.32.0\lib\net45\Google.Protobuf.dll</HintPath>
+    </Reference>
+    <Reference Include="K4os.Compression.LZ4, Version=1.3.8.0, Culture=neutral, PublicKeyToken=2186fa9121ef231d, processorArchitecture=MSIL">
+      <HintPath>..\packages\K4os.Compression.LZ4.1.3.8\lib\net462\K4os.Compression.LZ4.dll</HintPath>
+    </Reference>
+    <Reference Include="K4os.Compression.LZ4.Streams, Version=1.3.8.0, Culture=neutral, PublicKeyToken=2186fa9121ef231d, processorArchitecture=MSIL">
+      <HintPath>..\packages\K4os.Compression.LZ4.Streams.1.3.8\lib\net462\K4os.Compression.LZ4.Streams.dll</HintPath>
+    </Reference>
+    <Reference Include="K4os.Hash.xxHash, Version=1.0.8.0, Culture=neutral, PublicKeyToken=32cd54395057cec3, processorArchitecture=MSIL">
+      <HintPath>..\packages\K4os.Hash.xxHash.1.0.8\lib\net462\K4os.Hash.xxHash.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.Bcl.AsyncInterfaces, Version=5.0.0.0, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51, processorArchitecture=MSIL">
+      <HintPath>..\packages\Microsoft.Bcl.AsyncInterfaces.5.0.0\lib\net461\Microsoft.Bcl.AsyncInterfaces.dll</HintPath>
+    </Reference>
+    <Reference Include="MySql.Data, Version=9.6.0.0, Culture=neutral, PublicKeyToken=c5687fc88969c44d, processorArchitecture=MSIL">
+      <HintPath>..\packages\MySql.Data.9.6.0\lib\net462\MySql.Data.dll</HintPath>
+    </Reference>
+    <Reference Include="System" />
+    <Reference Include="System.Buffers, Version=4.0.3.0, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51, processorArchitecture=MSIL">
+      <HintPath>..\packages\System.Buffers.4.5.1\lib\net461\System.Buffers.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Configuration" />
+    <Reference Include="System.Configuration.ConfigurationManager, Version=8.0.0.0, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51, processorArchitecture=MSIL">
+      <HintPath>..\packages\System.Configuration.ConfigurationManager.8.0.0\lib\net462\System.Configuration.ConfigurationManager.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Data" />
+    <Reference Include="System.Deployment" />
+    <Reference Include="System.Drawing" />
+    <Reference Include="System.IO.Pipelines, Version=5.0.0.2, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51, processorArchitecture=MSIL">
+      <HintPath>..\packages\System.IO.Pipelines.5.0.2\lib\net461\System.IO.Pipelines.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Management" />
+    <Reference Include="System.Memory, Version=4.0.1.2, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51, processorArchitecture=MSIL">
+      <HintPath>..\packages\System.Memory.4.5.5\lib\net461\System.Memory.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Numerics" />
+    <Reference Include="System.Numerics.Vectors, Version=4.1.4.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
+      <HintPath>..\packages\System.Numerics.Vectors.4.5.0\lib\net46\System.Numerics.Vectors.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Runtime.CompilerServices.Unsafe, Version=6.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
+      <HintPath>..\packages\System.Runtime.CompilerServices.Unsafe.6.0.0\lib\net461\System.Runtime.CompilerServices.Unsafe.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Threading.Tasks.Extensions, Version=4.2.0.1, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51, processorArchitecture=MSIL">
+      <HintPath>..\packages\System.Threading.Tasks.Extensions.4.5.4\lib\net461\System.Threading.Tasks.Extensions.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Transactions" />
+    <Reference Include="System.Windows.Forms" />
+    <Reference Include="System.Windows.Forms.DataVisualization" />
+    <Reference Include="System.Xml" />
+    <Reference Include="System.Core" />
+    <Reference Include="System.Xml.Linq" />
+    <Reference Include="System.Data.DataSetExtensions" />
+    <Reference Include="System.Net.Http" />
+    <Reference Include="ZstdSharp, Version=0.8.6.0, Culture=neutral, PublicKeyToken=8d151af33a4ad5cf, processorArchitecture=MSIL">
+      <HintPath>..\packages\ZstdSharp.Port.0.8.6\lib\net462\ZstdSharp.dll</HintPath>
+    </Reference>
+    <Reference Include="zxing, Version=0.16.11.0, Culture=neutral, PublicKeyToken=4e88037ac681fe60, processorArchitecture=MSIL">
+      <HintPath>..\packages\ZXing.Net.0.16.11\lib\net47\zxing.dll</HintPath>
+    </Reference>
+    <Reference Include="zxing.presentation, Version=0.16.11.0, Culture=neutral, PublicKeyToken=4e88037ac681fe60, processorArchitecture=MSIL">
+      <HintPath>..\packages\ZXing.Net.0.16.11\lib\net47\zxing.presentation.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+  <ItemGroup>
+    <Import Include="Microsoft.VisualBasic" />
+    <Import Include="System" />
+    <Import Include="System.Collections" />
+    <Import Include="System.Collections.Generic" />
+    <Import Include="System.Data" />
+    <Import Include="System.Drawing" />
+    <Import Include="System.Diagnostics" />
+    <Import Include="System.Windows.Forms" />
+    <Import Include="System.Linq" />
+    <Import Include="System.Xml.Linq" />
+    <Import Include="System.Threading.Tasks" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="BasculaManager.vb" />
+    <Compile Include="ConexionBD.vb" />
+    <Compile Include="ctlObjeto.Designer.vb">
+      <DependentUpon>ctlObjeto.vb</DependentUpon>
+    </Compile>
+    <Compile Include="ctlObjeto.vb">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="Datos.vb" />
+    <Compile Include="Entidades.vb" />
+    <Compile Include="Form1.vb">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Form1.Designer.vb">
+      <DependentUpon>Form1.vb</DependentUpon>
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="My Project\AssemblyInfo.vb" />
+    <Compile Include="My Project\Application.Designer.vb">
+      <AutoGen>True</AutoGen>
+      <DependentUpon>Application.myapp</DependentUpon>
+    </Compile>
+    <Compile Include="My Project\Resources.Designer.vb">
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+      <DependentUpon>Resources.resx</DependentUpon>
+    </Compile>
+    <Compile Include="My Project\Settings.Designer.vb">
+      <AutoGen>True</AutoGen>
+      <DependentUpon>Settings.settings</DependentUpon>
+      <DesignTimeSharedInput>True</DesignTimeSharedInput>
+    </Compile>
+    <Compile Include="SesionPesaje.vb" />
+    <Compile Include="Settings.vb" />
+    <Compile Include="TouchDialogs.vb" />
+    <Compile Include="ucCaja.Designer.vb">
+      <DependentUpon>ucCaja.vb</DependentUpon>
+    </Compile>
+    <Compile Include="ucCaja.vb">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="ucCalibradoPesaje.Designer.vb">
+      <DependentUpon>ucCalibradoPesaje.vb</DependentUpon>
+    </Compile>
+    <Compile Include="ucCalibradoPesaje.vb">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="ucCalibradoValidacion.Designer.vb">
+      <DependentUpon>ucCalibradoValidacion.vb</DependentUpon>
+    </Compile>
+    <Compile Include="ucCalibradoValidacion.vb">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="ucConfiguracion.Designer.vb">
+      <DependentUpon>ucConfiguracion.vb</DependentUpon>
+    </Compile>
+    <Compile Include="ucConfiguracion.vb">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="ucConfirmacionPesaje.Designer.vb">
+      <DependentUpon>ucConfirmacionPesaje.vb</DependentUpon>
+    </Compile>
+    <Compile Include="ucConfirmacionPesaje.vb">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="ucCrearOrden.Designer.vb">
+      <DependentUpon>ucCrearOrden.vb</DependentUpon>
+    </Compile>
+    <Compile Include="ucCrearOrden.vb">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="ucCrearOrdenDespacho.Designer.vb">
+      <DependentUpon>ucCrearOrdenDespacho.vb</DependentUpon>
+    </Compile>
+    <Compile Include="ucCrearOrdenDespacho.vb">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="ucDashboard.Designer.vb">
+      <DependentUpon>ucDashboard.vb</DependentUpon>
+    </Compile>
+    <Compile Include="ucDashboard.vb">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="ucDashboardDespacho.Designer.vb">
+      <DependentUpon>ucDashboardDespacho.vb</DependentUpon>
+    </Compile>
+    <Compile Include="ucDashboardDespacho.vb">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="ucDashboardPallet.Designer.vb">
+      <DependentUpon>ucDashboardPallet.vb</DependentUpon>
+    </Compile>
+    <Compile Include="ucDashboardPallet.vb">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="ucEditarRecepcion.Designer.vb">
+      <DependentUpon>ucEditarRecepcion.vb</DependentUpon>
+    </Compile>
+    <Compile Include="ucEditarRecepcion.vb">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="ucNuevaRecepcion.Designer.vb">
+      <DependentUpon>ucNuevaRecepcion.vb</DependentUpon>
+    </Compile>
+    <Compile Include="ucNuevaRecepcion.vb">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="ucNuevoDespacho.Designer.vb">
+      <DependentUpon>ucNuevoDespacho.vb</DependentUpon>
+    </Compile>
+    <Compile Include="ucNuevoDespacho.vb">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="ucOrdenDespachoRepesaje.Designer.vb">
+      <DependentUpon>ucOrdenDespachoRepesaje.vb</DependentUpon>
+    </Compile>
+    <Compile Include="ucOrdenDespachoRepesaje.vb">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="ucOrdenDespachoRepesajeActualizar.Designer.vb">
+      <DependentUpon>ucOrdenDespachoRepesajeActualizar.vb</DependentUpon>
+    </Compile>
+    <Compile Include="ucOrdenDespachoRepesajeActualizar.vb">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="ucOrdenDespachoRepesajeValidacion.Designer.vb">
+      <DependentUpon>ucOrdenDespachoRepesajeValidacion.vb</DependentUpon>
+    </Compile>
+    <Compile Include="ucOrdenDespachoRepesajeValidacion.vb">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="ucOrdenRepesaje.Designer.vb">
+      <DependentUpon>ucOrdenRepesaje.vb</DependentUpon>
+    </Compile>
+    <Compile Include="ucOrdenRepesaje.vb">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="ucOrdenRepesajeActualizar.Designer.vb">
+      <DependentUpon>ucOrdenRepesajeActualizar.vb</DependentUpon>
+    </Compile>
+    <Compile Include="ucOrdenRepesajeActualizar.vb">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="ucOrdenRepesajeValidacion.Designer.vb">
+      <DependentUpon>ucOrdenRepesajeValidacion.vb</DependentUpon>
+    </Compile>
+    <Compile Include="ucOrdenRepesajeValidacion.vb">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="ucPallet.Designer.vb">
+      <DependentUpon>ucPallet.vb</DependentUpon>
+    </Compile>
+    <Compile Include="ucPallet.vb">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="ucPesaje.Designer.vb">
+      <DependentUpon>ucPesaje.vb</DependentUpon>
+    </Compile>
+    <Compile Include="ucPesaje.vb">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="ucNuevoProceso.Designer.vb">
+      <DependentUpon>ucNuevoProceso.vb</DependentUpon>
+    </Compile>
+    <Compile Include="ucNuevoProceso.vb">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="ucPesajePallets.Designer.vb">
+      <DependentUpon>ucPesajePallets.vb</DependentUpon>
+    </Compile>
+    <Compile Include="ucPesajePallets.vb">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="ucPesajePalletsDespacho.Designer.vb">
+      <DependentUpon>ucPesajePalletsDespacho.vb</DependentUpon>
+    </Compile>
+    <Compile Include="ucPesajePalletsDespacho.vb">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="ucProcesoCalibrado.Designer.vb">
+      <DependentUpon>ucProcesoCalibrado.vb</DependentUpon>
+    </Compile>
+    <Compile Include="ucProcesoCalibrado.vb">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="ucProcesoEstado.Designer.vb">
+      <DependentUpon>ucProcesoEstado.vb</DependentUpon>
+    </Compile>
+    <Compile Include="ucProcesoEstado.vb">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="ucProcesoEstadoPaletizado.Designer.vb">
+      <DependentUpon>ucProcesoEstadoPaletizado.vb</DependentUpon>
+    </Compile>
+    <Compile Include="ucProcesoEstadoPaletizado.vb">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="ucProcesoPaletizado.Designer.vb">
+      <DependentUpon>ucProcesoPaletizado.vb</DependentUpon>
+    </Compile>
+    <Compile Include="ucProcesoPaletizado.vb">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="ucProcesoPallet.Designer.vb">
+      <DependentUpon>ucProcesoPallet.vb</DependentUpon>
+    </Compile>
+    <Compile Include="ucProcesoPallet.vb">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="ucProcesoRegistro.Designer.vb">
+      <DependentUpon>ucProcesoRegistro.vb</DependentUpon>
+    </Compile>
+    <Compile Include="ucProcesoRegistro.vb">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="ucProducto.Designer.vb">
+      <DependentUpon>ucProducto.vb</DependentUpon>
+    </Compile>
+    <Compile Include="ucProducto.vb">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="ucRecepcion.Designer.vb">
+      <DependentUpon>ucRecepcion.vb</DependentUpon>
+    </Compile>
+    <Compile Include="ucRecepcion.vb">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="ucRecepcionEstado.Designer.vb">
+      <DependentUpon>ucRecepcionEstado.vb</DependentUpon>
+    </Compile>
+    <Compile Include="ucRecepcionEstado.vb">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="ucRecepcionFinal.Designer.vb">
+      <DependentUpon>ucRecepcionFinal.vb</DependentUpon>
+    </Compile>
+    <Compile Include="ucRecepcionFinal.vb">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="ucReporteFIFO.Designer.vb">
+      <DependentUpon>ucReporteFIFO.vb</DependentUpon>
+    </Compile>
+    <Compile Include="ucReporteFIFO.vb">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="ucResumen.Designer.vb">
+      <DependentUpon>ucResumen.vb</DependentUpon>
+    </Compile>
+    <Compile Include="ucResumen.vb">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="ucSelector.Designer.vb">
+      <DependentUpon>ucSelector.vb</DependentUpon>
+    </Compile>
+    <Compile Include="ucSelector.vb">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="ucTarjado.Designer.vb">
+      <DependentUpon>ucTarjado.vb</DependentUpon>
+    </Compile>
+    <Compile Include="ucTarjado.vb">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="ucTarjadoPesaje.Designer.vb">
+      <DependentUpon>ucTarjadoPesaje.vb</DependentUpon>
+    </Compile>
+    <Compile Include="ucTarjadoPesaje.vb">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="ucTarjetaResumenCalibre.Designer.vb">
+      <DependentUpon>ucTarjetaResumenCalibre.vb</DependentUpon>
+    </Compile>
+    <Compile Include="ucTarjetaResumenCalibre.vb">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="ucTarjetaUbicacion.Designer.vb">
+      <DependentUpon>ucTarjetaUbicacion.vb</DependentUpon>
+    </Compile>
+    <Compile Include="ucTarjetaUbicacion.vb">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="ucTicket.Designer.vb">
+      <DependentUpon>ucTicket.vb</DependentUpon>
+    </Compile>
+    <Compile Include="ucTicket.vb">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="ucUbicacion.Designer.vb">
+      <DependentUpon>ucUbicacion.vb</DependentUpon>
+    </Compile>
+    <Compile Include="ucUbicacion.vb">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="ucUbicacionPallets.Designer.vb">
+      <DependentUpon>ucUbicacionPallets.vb</DependentUpon>
+    </Compile>
+    <Compile Include="ucUbicacionPallets.vb">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="ucUbicacionPalletsDespacho.Designer.vb">
+      <DependentUpon>ucUbicacionPalletsDespacho.vb</DependentUpon>
+    </Compile>
+    <Compile Include="ucUbicacionPalletsDespacho.vb">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="ucValidacionPallet.Designer.vb">
+      <DependentUpon>ucValidacionPallet.vb</DependentUpon>
+    </Compile>
+    <Compile Include="ucValidacionPallet.vb">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="ucValidacionPalletDespacho.Designer.vb">
+      <DependentUpon>ucValidacionPalletDespacho.vb</DependentUpon>
+    </Compile>
+    <Compile Include="ucValidacionPalletDespacho.vb">
+      <SubType>UserControl</SubType>
+    </Compile>
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="ctlObjeto.resx">
+      <DependentUpon>ctlObjeto.vb</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Form1.resx">
+      <DependentUpon>Form1.vb</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="My Project\Resources.resx">
+      <Generator>VbMyResourcesResXFileCodeGenerator</Generator>
+      <LastGenOutput>Resources.Designer.vb</LastGenOutput>
+      <CustomToolNamespace>My.Resources</CustomToolNamespace>
+      <SubType>Designer</SubType>
+    </EmbeddedResource>
+    <EmbeddedResource Include="ucCaja.resx">
+      <DependentUpon>ucCaja.vb</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="ucCalibradoPesaje.resx">
+      <DependentUpon>ucCalibradoPesaje.vb</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="ucCalibradoValidacion.resx">
+      <DependentUpon>ucCalibradoValidacion.vb</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="ucConfiguracion.resx">
+      <DependentUpon>ucConfiguracion.vb</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="ucConfirmacionPesaje.resx">
+      <DependentUpon>ucConfirmacionPesaje.vb</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="ucCrearOrden.resx">
+      <DependentUpon>ucCrearOrden.vb</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="ucCrearOrdenDespacho.resx">
+      <DependentUpon>ucCrearOrdenDespacho.vb</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="ucDashboard.resx">
+      <DependentUpon>ucDashboard.vb</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="ucDashboardDespacho.resx">
+      <DependentUpon>ucDashboardDespacho.vb</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="ucDashboardPallet.resx">
+      <DependentUpon>ucDashboardPallet.vb</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="ucEditarRecepcion.resx">
+      <DependentUpon>ucEditarRecepcion.vb</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="ucNuevaRecepcion.resx">
+      <DependentUpon>ucNuevaRecepcion.vb</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="ucNuevoDespacho.resx">
+      <DependentUpon>ucNuevoDespacho.vb</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="ucOrdenDespachoRepesaje.resx">
+      <DependentUpon>ucOrdenDespachoRepesaje.vb</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="ucOrdenDespachoRepesajeActualizar.resx">
+      <DependentUpon>ucOrdenDespachoRepesajeActualizar.vb</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="ucOrdenDespachoRepesajeValidacion.resx">
+      <DependentUpon>ucOrdenDespachoRepesajeValidacion.vb</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="ucOrdenRepesaje.resx">
+      <DependentUpon>ucOrdenRepesaje.vb</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="ucOrdenRepesajeActualizar.resx">
+      <DependentUpon>ucOrdenRepesajeActualizar.vb</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="ucOrdenRepesajeValidacion.resx">
+      <DependentUpon>ucOrdenRepesajeValidacion.vb</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="ucPallet.resx">
+      <DependentUpon>ucPallet.vb</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="ucPesaje.resx">
+      <DependentUpon>ucPesaje.vb</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="ucNuevoProceso.resx">
+      <DependentUpon>ucNuevoProceso.vb</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="ucPesajePallets.resx">
+      <DependentUpon>ucPesajePallets.vb</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="ucPesajePalletsDespacho.resx">
+      <DependentUpon>ucPesajePalletsDespacho.vb</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="ucProcesoCalibrado.resx">
+      <DependentUpon>ucProcesoCalibrado.vb</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="ucProcesoEstado.resx">
+      <DependentUpon>ucProcesoEstado.vb</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="ucProcesoEstadoPaletizado.resx">
+      <DependentUpon>ucProcesoEstadoPaletizado.vb</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="ucProcesoPaletizado.resx">
+      <DependentUpon>ucProcesoPaletizado.vb</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="ucProcesoPallet.resx">
+      <DependentUpon>ucProcesoPallet.vb</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="ucProcesoRegistro.resx">
+      <DependentUpon>ucProcesoRegistro.vb</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="ucProducto.resx">
+      <DependentUpon>ucProducto.vb</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="ucRecepcion.resx">
+      <DependentUpon>ucRecepcion.vb</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="ucRecepcionEstado.resx">
+      <DependentUpon>ucRecepcionEstado.vb</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="ucRecepcionFinal.resx">
+      <DependentUpon>ucRecepcionFinal.vb</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="ucReporteFIFO.resx">
+      <DependentUpon>ucReporteFIFO.vb</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="ucResumen.resx">
+      <DependentUpon>ucResumen.vb</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="ucSelector.resx">
+      <DependentUpon>ucSelector.vb</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="ucTarjado.resx">
+      <DependentUpon>ucTarjado.vb</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="ucTarjadoPesaje.resx">
+      <DependentUpon>ucTarjadoPesaje.vb</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="ucTarjetaResumenCalibre.resx">
+      <DependentUpon>ucTarjetaResumenCalibre.vb</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="ucTarjetaUbicacion.resx">
+      <DependentUpon>ucTarjetaUbicacion.vb</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="ucTicket.resx">
+      <DependentUpon>ucTicket.vb</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="ucUbicacion.resx">
+      <DependentUpon>ucUbicacion.vb</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="ucUbicacionPallets.resx">
+      <DependentUpon>ucUbicacionPallets.vb</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="ucUbicacionPalletsDespacho.resx">
+      <DependentUpon>ucUbicacionPalletsDespacho.vb</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="ucValidacionPallet.resx">
+      <DependentUpon>ucValidacionPallet.vb</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="ucValidacionPalletDespacho.resx">
+      <DependentUpon>ucValidacionPalletDespacho.vb</DependentUpon>
+    </EmbeddedResource>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="My Project\Application.myapp">
+      <Generator>MyApplicationCodeGenerator</Generator>
+      <LastGenOutput>Application.Designer.vb</LastGenOutput>
+    </None>
+    <None Include="My Project\Settings.settings">
+      <Generator>SettingsSingleFileGenerator</Generator>
+      <CustomToolNamespace>My</CustomToolNamespace>
+      <LastGenOutput>Settings.Designer.vb</LastGenOutput>
+    </None>
+    <None Include="App.config" />
+    <None Include="packages.config" />
+    <None Include="sistemaPackingv2_TemporaryKey.pfx" />
+  </ItemGroup>
+  <ItemGroup>
+    <BootstrapperPackage Include=".NETFramework,Version=v4.7.2">
+      <Visible>False</Visible>
+      <ProductName>Microsoft .NET Framework 4.7.2 %28x86 y x64%29</ProductName>
+      <Install>true</Install>
+    </BootstrapperPackage>
+    <BootstrapperPackage Include="Microsoft.Net.Framework.3.5.SP1">
+      <Visible>False</Visible>
+      <ProductName>.NET Framework 3.5 SP1</ProductName>
+      <Install>false</Install>
+    </BootstrapperPackage>
+  </ItemGroup>
+  <Import Project="$(MSBuildToolsPath)\Microsoft.VisualBasic.targets" />
+</Project>
