@@ -1,23 +1,19 @@
 ﻿Imports MySql.Data.MySqlClient
 Imports System.Drawing.Printing
-Imports ZXing ' Importar la librería instalada
+Imports ZXing
 
 Public Class ucTicket
     Private _idRecepcion As Integer
     Private _nCiclo As Integer
-    Private _etiquetaFiltro As String = "" ' Se llenará desde la BD
-    Dim dRecepcion As Integer
+    Private _etiquetaFiltro As String = ""
 
-    ' CONSTRUCTOR
     Public Sub New(idRecepcion As Integer, ciclo As Integer)
         InitializeComponent()
         _idRecepcion = idRecepcion
-        dRecepcion = idRecepcion
         _nCiclo = ciclo
     End Sub
 
     Private Sub ucConfirmacionPesaje_Load(sender As Object, e As EventArgs) Handles MyBase.Load
-        'lblInfo.Text = $"Recepción: {_idRecepcion} | Ciclo: {_nCiclo}"
         CargarGrillaPorLlaves()
     End Sub
 
@@ -25,9 +21,10 @@ Public Class ucTicket
     Private Sub CargarGrillaPorLlaves()
         Try
             ConexionBD.Abrir()
-            ' Nota: Asegúrate de que el nombre del campo sea 'etiqueta_ciclo' como en tu INSERT
-            Dim sql As String = "SELECT codigo,recepcion,productor,producto,variedad ,tara, bruto, neto,ciclo ,etiqueta as etiqueta_ciclo FROM vw_recepciones_detalles_resumen " &
-                                "WHERE recepcion = @idR And ciclo = @ciclo"
+
+            Dim sql As String = "SELECT codigo, recepcion,prefijo , tipo,productor, producto, variedad, tara, bruto, neto, ciclo, numero, calibre, estado, fecha, hora " &
+                             "FROM vw_recepciones_detalles_resumen " &
+                             "WHERE recepcion = @idR AND ciclo = @ciclo"
 
             Dim da As New MySqlDataAdapter(sql, ConexionBD.conexion)
             da.SelectCommand.Parameters.AddWithValue("@idR", _idRecepcion)
@@ -35,42 +32,52 @@ Public Class ucTicket
 
             Dim dt As New DataTable()
             da.Fill(dt)
+
+            ' 2. CREACIÓN DINÁMICA DE LA ETIQUETA PARA LA GRILLA
+            dt.Columns.Add("etiqueta", GetType(String))
+
+            For Each row As DataRow In dt.Rows
+                Dim pref As String = row("prefijo").ToString()
+                Dim rec As String = row("recepcion").ToString()
+                Dim cic As String = row("ciclo").ToString()
+
+                ' Arma la etiqueta y la inserta en la fila correspondiente
+                row("etiqueta") = $"{pref}-{rec.PadLeft(2, "0"c)}-{cic}"
+            Next
+
+            ' 3. Se asigna el origen de datos al DGV (ahora incluye la columna etiqueta)
             dgvFinal.DataSource = dt
 
-            ' ASIGNACIÓN DINÁMICA DE LA ETIQUETA
+            ' 4. Guardar variable global (no fallará porque ya creamos la columna)
             If dt.Rows.Count > 0 Then
-                ' Tomamos la etiqueta del primer registro para usarla en todos los tickets
-                _etiquetaFiltro = dt.Rows(0)("etiqueta_ciclo").ToString()
-                ' lblTituloTransaccion.Text = "ETIQUETA: " & _etiquetaFiltro
+                _etiquetaFiltro = dt.Rows(0)("etiqueta").ToString()
             End If
 
         Catch ex As Exception
-            MessageBox.Show("Error al recuperar datos del ciclo: " & ex.Message)
+            MessageBox.Show("Error al recuperar datos del ciclo: " & ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error)
         Finally
             ConexionBD.Cerrar()
         End Try
     End Sub
+
+
     Private Function GenerarImagenBarcode(texto As String) As Bitmap
         Try
-            Dim escritor As New BarcodeWriter
-            ' Configuramos el formato a CODE_128 (es más compacto y moderno que el 39)
-            escritor.Format = BarcodeFormat.CODE_128
-
-            ' Dimensiones para el ticket de 80mm (aprox 250px de ancho)
+            Dim escritor As New BarcodeWriter With {
+                .Format = BarcodeFormat.CODE_128
+            }
             escritor.Options = New Common.EncodingOptions With {
-            .Width = 250,
-            .Height = 80,
-            .Margin = 2 ' Margen blanco alrededor para que el escáner lea bien
-        }
-
-            ' Retorna el mapa de bits (la imagen)
+                .Width = 350,
+                .Height = 100,
+                .Margin = 2
+            }
             Return escritor.Write(texto)
         Catch ex As Exception
             Return Nothing
         End Try
     End Function
 
-    ' --- LÓGICA DE IMPRESIÓN ---
+    ' --- LÓGICA DE IMPRESIÓN EN LOTE ---
     Private Sub btnImprimirTodo_Click(sender As Object, e As EventArgs) Handles btnImprimirTodo.Click
         If dgvFinal.Rows.Count = 0 Then Return
 
@@ -83,253 +90,262 @@ Public Class ucTicket
 
     Private Sub ImprimirTicketIndividual(row As DataGridViewRow)
         Dim pd As New PrintDocument()
-        ' Custom: 80mm (315px) x 100mm (393px)
-        pd.DefaultPageSettings.PaperSize = New PaperSize("Custom", 315, 393)
+        ' CORREGIDO: Medidas de 100mm x 200mm (394 x 787 centésimas de pulgada)
+        pd.DefaultPageSettings.PaperSize = New PaperSize("100x150", 394, 590)
+        pd.DefaultPageSettings.Margins = New Margins(0, 0, 0, 0)
 
-        ' Usamos una variable local para pasar la fila al evento de impresión
         Dim filaSeleccionada = row
         AddHandler pd.PrintPage, Sub(sender, e)
-                                     DisenoTicket80x100(e, filaSeleccionada)
+                                     DisenoTicket100x200(e, filaSeleccionada)
                                  End Sub
         pd.Print()
     End Sub
 
-
-    ' --- BOTÓN PARA IMPRIMIR ---
+    ' --- BOTÓN PARA IMPRIMIR ETIQUETA QR GIGANTE ---
     Private Sub btnImpQr_Click(sender As Object, e As EventArgs) Handles btnImpQr.Click
         If dgvFinal.CurrentRow Is Nothing Then
             MessageBox.Show("Seleccione una fila primero.")
             Return
         End If
 
-        Dim idSeleccionado As String = dgvFinal.CurrentRow.Cells("codigo").Value.ToString()
+        ' Ahora pasamos la fila completa, no solo el ID
+        Dim filaSeleccionada = dgvFinal.CurrentRow
 
         Dim pd As New PrintDocument()
-        ' 80mm (315) x 100mm (393)
-        pd.DefaultPageSettings.PaperSize = New PaperSize("Custom", 315, 393)
+        ' Ajustado a 100x150mm (394x590) para que quepa el QR gigante + los 7 datos + código de barras
+        pd.DefaultPageSettings.PaperSize = New PaperSize("100x150", 394, 590)
         pd.DefaultPageSettings.Margins = New Margins(0, 0, 0, 0)
 
         AddHandler pd.PrintPage, Sub(s, ev)
-                                     DisenoTicketQR_80x100_Final(ev, idSeleccionado)
+                                     DisenoTicketQR_Grande(ev, filaSeleccionada)
                                  End Sub
         pd.Print()
     End Sub
 
-    ' --- DISEÑO DEL TICKET ---
-    Private Sub DisenoTicketQR_80x100_Final(e As PrintPageEventArgs, idBin As String)
-        ' Configuraciones de dibujo
-        Dim anchoPapel As Integer = 315
-        Dim x As Integer = 10
-        Dim y As Integer = 15
+    ' --- DISEÑO DEL TICKET QR GIGANTE (100mm x 150mm) ---
+    Private Sub DisenoTicketQR_Grande(e As PrintPageEventArgs, row As DataGridViewRow)
+        Dim anchoPapel As Integer = 394
+        Dim x As Integer = 20
+        Dim y As Integer = 20
 
-        Dim fID As New Font("Consolas", 16, FontStyle.Bold) ' Un poco más grande para el final
-        Dim lapiz As New Pen(Color.Black, 2)
+        Using fCalibreNumero As New Font("Arial", 38, FontStyle.Bold),
+              fCalibreLabel As New Font("Arial", 8, FontStyle.Bold),
+              fDatosLabel As New Font("Arial", 11, FontStyle.Bold),
+              fDatosValor As New Font("Arial", 11),
+              fTimestamp As New Font("Arial", 9, FontStyle.Italic)
 
-        ' 1. CÓDIGO QR (Tamaño recuperado de la ventana: 250px para que luzca bien)
-        Dim escritorQR As New ZXing.BarcodeWriter()
-        escritorQR.Format = ZXing.BarcodeFormat.QR_CODE
-        escritorQR.Options = New ZXing.QrCode.QrCodeEncodingOptions With {
-        .Height = 250,
-        .Width = 250,
-        .Margin = 0
-    }
+            Dim codigoBin As String = ObtenerTextoCelda(row, "codigo")
 
-        Dim bmpQR As Bitmap = escritorQR.Write(idBin)
-        Dim xQR As Integer = (anchoPapel - 250) / 2
-        e.Graphics.DrawImage(bmpQR, xQR, y, 250, 250)
-        y += 260 ' Espacio tras el QR
+            ' 1. CÓDIGO QR GIGANTE A LA IZQUIERDA (220x220 px)
+            Dim tamQR As Integer = 220
+            Dim escritorQR As New ZXing.BarcodeWriter With {
+                .Format = ZXing.BarcodeFormat.QR_CODE
+            }
+            escritorQR.Options = New ZXing.QrCode.QrCodeEncodingOptions With {
+                .Height = tamQR,
+                .Width = tamQR,
+                .Margin = 0
+            }
+            Using bmpQR As Bitmap = escritorQR.Write(codigoBin)
+                If bmpQR IsNot Nothing Then
+                    e.Graphics.DrawImage(bmpQR, x, y, tamQR, tamQR)
+                End If
+            End Using
 
-        ' 2. SEPARADOR (Línea horizontal sólida)
-        e.Graphics.DrawLine(lapiz, 20, y, anchoPapel - 20, y)
-        y += 15
+            ' 2. RECUADRO DE CALIBRE (NÚMERO) A LA DERECHA
+            Dim numCalibre As String = ObtenerTextoCelda(row, "numero")
+            Dim recCalibre As New Rectangle(anchoPapel - 100, y, 80, 75)
+            e.Graphics.DrawRectangle(Pens.Black, recCalibre)
 
-        ' 3. CÓDIGO DE BARRAS 
-        Dim escritorBar = New ZXing.BarcodeWriter()
-        escritorBar.Format = ZXing.BarcodeFormat.CODE_128
-        escritorBar.Options = New ZXing.Common.EncodingOptions With {
-        .Height = 50,
-        .Width = 280,
-        .Margin = 2,
-        .PureBarcode = True
-    }
+            Dim tamCalLabel = e.Graphics.MeasureString("CALIBRE", fCalibreLabel)
+            e.Graphics.DrawString("CALIBRE", fCalibreLabel, Brushes.Black, recCalibre.X + (80 - tamCalLabel.Width) / 2, recCalibre.Y + 4)
 
-        Dim bmpBarcode As Bitmap = escritorBar.Write(idBin)
-        If bmpBarcode IsNot Nothing Then
-            Dim xBar As Integer = (anchoPapel - 280) / 2
-            e.Graphics.DrawImage(bmpBarcode, xBar, y, 280, 50)
-            y += 55
-        End If
+            Dim tamCalNum = e.Graphics.MeasureString(numCalibre, fCalibreNumero)
+            e.Graphics.DrawString(numCalibre, fCalibreNumero, Brushes.Black, recCalibre.X + (80 - tamCalNum.Width) / 2, recCalibre.Y + 18)
 
-        ' 4. ID VISUAL AL FINAL (Grande y centrado)
-        Dim textoID As String = idBin ' Solo el ID para máxima visibilidad
-        Dim tamTexto = e.Graphics.MeasureString(textoID, fID)
-        Dim xCentrado As Integer = (anchoPapel - tamTexto.Width) / 2
-        e.Graphics.DrawString(textoID, fID, Brushes.Black, xCentrado, y)
+            ' Avanzamos Y justo debajo del QR
+            y += tamQR + 10
 
+            ' LÍNEA SEPARADORA
+            e.Graphics.DrawLine(Pens.Black, x, y, anchoPapel - x, y)
+            y += 10
+
+            ' 3. LISTA DE DATOS SOLICITADOS
+            Dim etiqueta As String = ObtenerTextoCelda(row, "etiqueta")
+
+            Dim datos As New Dictionary(Of String, String) From {
+                {"Código ID:", codigoBin},
+                {"Recepción:", ObtenerTextoCelda(row, "recepcion")},
+                {"Tipo:", etiqueta},
+                {"Productor:", ObtenerTextoCelda(row, "productor")},
+                {"Producto:", ObtenerTextoCelda(row, "producto")},
+                {"Variedad:", ObtenerTextoCelda(row, "variedad")},
+                {"Calibre:", ObtenerTextoCelda(row, "calibre")}
+            }
+
+            Dim posXValor As Integer = 120 ' Tabulación para que los valores queden alineados
+            For Each item In datos
+                e.Graphics.DrawString(item.Key, fDatosLabel, Brushes.Black, x, y)
+                e.Graphics.DrawString(item.Value, fDatosValor, Brushes.Black, posXValor, y)
+                y += 24 ' Espaciado entre lineas
+            Next
+
+            ' LÍNEA SEPARADORA
+            y += 5
+            e.Graphics.DrawLine(Pens.Gray, x, y, anchoPapel - x, y)
+            y += 10
+
+            ' 4. CÓDIGO DE BARRAS INFERIOR
+            Using bmpBarcode As Bitmap = GenerarImagenBarcode(codigoBin)
+                If bmpBarcode IsNot Nothing Then
+                    Dim anchoBarcode As Integer = anchoPapel - (x * 2)
+                    ' Reducimos la altura del barcode a 60px para optimizar el espacio inferior
+                    e.Graphics.DrawImage(bmpBarcode, x, y, anchoBarcode, 60)
+                    y += 65
+                End If
+            End Using
+
+            ' 5. FECHA Y HORA AL FINAL
+            Dim fechaVal As String = ObtenerTextoCelda(row, "fecha")
+            Dim horaVal As String = ObtenerTextoCelda(row, "hora")
+            e.Graphics.DrawString($"Fecha: {fechaVal} {horaVal}", fTimestamp, Brushes.Black, x, y)
+        End Using
     End Sub
 
+    ' --- DISEÑO DEL TICKET PRINCIPAL ---
+    Private Sub DisenoTicket100x200(e As PrintPageEventArgs, row As DataGridViewRow)
+        Dim anchoPapel As Integer = 394
+        Dim x As Integer = 20
+        Dim y As Integer = 20
 
+        Using fTitulo As New Font("Arial", 14, FontStyle.Bold),
+              fCalibreNumero As New Font("Arial", 38, FontStyle.Bold),
+              fCalibreLabel As New Font("Arial", 8, FontStyle.Bold),
+              fDatosLabel As New Font("Arial", 11, FontStyle.Bold),
+              fDatosValor As New Font("Arial", 11),
+              fNetoValue As New Font("Arial", 15, FontStyle.Bold),
+              fTimestamp As New Font("Arial", 9, FontStyle.Italic),
+              fEtiqueta As New Font("Arial", 9, FontStyle.Italic)
 
-    ' --- DISEÑO DEL TICKET (80mm x 100mm) ---
-    Private Sub DisenoTicket80x100(e As PrintPageEventArgs, row As DataGridViewRow)
-        ' Configuración de fuentes
-        Dim fTitulo As New Font("Fuente A", 14, FontStyle.Bold)
-        Dim fDatosLabel As New Font("Arial", 11, FontStyle.Bold)
-        Dim fDatosValor As New Font("Arial", 11)
-        Dim fTimestamp As New Font("Arial", 9, FontStyle.Italic)
+            ' 0. LEER EL ID
+            Dim codigoBin As String = ObtenerTextoCelda(row, "codigo")
 
-        Dim x As Integer = 15
-        Dim y As Integer = 15
-        Dim anchoPapel As Integer = 280 ' Aproximado para 80mm
-        Dim idBin As String = row.Cells("codigo").Value.ToString()
+            ' 1. CÓDIGO QR A LA IZQUIERDA
+            Dim escritorQR As New ZXing.BarcodeWriter With {
+                .Format = ZXing.BarcodeFormat.QR_CODE
+            }
+            escritorQR.Options = New ZXing.QrCode.QrCodeEncodingOptions With {
+                .Height = 75,
+                .Width = 75,
+                .Margin = 0
+            }
+            Using bmpQR As Bitmap = escritorQR.Write(codigoBin)
+                If bmpQR IsNot Nothing Then
+                    e.Graphics.DrawImage(bmpQR, x, y, 75, 75)
+                End If
+            End Using
 
+            ' 2. RECUADRO DE CALIBRE A LA DERECHA
+            Dim numCalibre As String = ObtenerTextoCelda(row, "numero")
+            Dim recCalibre As New Rectangle(anchoPapel - 100, y, 80, 75)
+            e.Graphics.DrawRectangle(Pens.Black, recCalibre)
 
+            Dim tamCalLabel = e.Graphics.MeasureString("CALIBRE", fCalibreLabel)
+            e.Graphics.DrawString("CALIBRE", fCalibreLabel, Brushes.Black, recCalibre.X + (80 - tamCalLabel.Width) / 2, recCalibre.Y + 4)
 
-        ' 2. CENTRO: Etiqueta Título (Usando la variable _etiquetaFiltro o similar)
-        ' Centramos el texto manualmente
-        Dim titulo As String = "PALTAS EL CHEJO"
-        Dim tamTitulo = e.Graphics.MeasureString(titulo, fTitulo)
-        e.Graphics.DrawString(titulo, fTitulo, Brushes.Black, (anchoPapel - tamTitulo.Width) / 2, y)
-        y += 35
+            Dim tamCalNum = e.Graphics.MeasureString(numCalibre, fCalibreNumero)
+            e.Graphics.DrawString(numCalibre, fCalibreNumero, Brushes.Black, recCalibre.X + (80 - tamCalNum.Width) / 2, recCalibre.Y + 18)
 
-        ' 1. ESQUINA SUPERIOR: Código QR (Tamaño 40x40)
-        'Dim bmpQR As Bitmap = GenerarImagenQR(idBin)
-        'If bmpQR IsNot Nothing Then
-        'e.Graphics.DrawImage(bmpQR, x, y, 40, 40)
-        'y += 40 ' Espacio después del QR
-        'End If
+            ' 3. TÍTULO EN EL MEDIO (CENTRADO)
+            Dim titulo As String = "PALTAS EL CHEJO"
+            Dim tamTitulo = e.Graphics.MeasureString(titulo, fTitulo)
+            ' Centrado horizontal entre el QR y el Calibre
+            Dim xTitulo As Single = (anchoPapel - tamTitulo.Width) / 2
+            ' Centrado vertical alineado a la altura de 75px del QR/Calibre
+            Dim yTitulo As Single = y + ((75 - tamTitulo.Height) / 2)
+            e.Graphics.DrawString(titulo, fTitulo, Brushes.Black, xTitulo, yTitulo)
 
+            ' 4. LÍNEA SEPARADORA CABECERA
+            y += 85
+            e.Graphics.DrawLine(Pens.Black, x, y, anchoPapel - x, y)
+            y += 15
 
-        Dim bruto As Decimal = Convert.ToDecimal(row.Cells("bruto").Value)
-        Dim neto As Decimal = Convert.ToDecimal(row.Cells("neto").Value)
-        Dim tara As Decimal = Convert.ToDecimal(row.Cells("tara").Value)
+            ' 5. LECTURA Y DIBUJO DE DATOS
+            Dim bruto As Decimal = ObtenerDecimalCelda(row, "bruto")
+            Dim neto As Decimal = ObtenerDecimalCelda(row, "neto")
+            Dim tara As Decimal = ObtenerDecimalCelda(row, "tara")
+            ' Dim etiqueta As String = ObtenerTextoCelda(row, "etiqueta")
 
+            Dim datos As New Dictionary(Of String, String) From {
+                {"Código ID:", codigoBin},
+                {"Recepción:", ObtenerTextoCelda(row, "recepcion")},
+                {"Tipo:", ObtenerTextoCelda(row, "tipo")},
+                {"Ciclo:", ObtenerTextoCelda(row, "ciclo")},
+                {"Productor:", ObtenerTextoCelda(row, "productor")},
+                {"Producto:", ObtenerTextoCelda(row, "producto")},
+                {"Variedad:", ObtenerTextoCelda(row, "variedad")},
+                {"Calibre:", ObtenerTextoCelda(row, "calibre")},
+                {"Kilos Brutos:", bruto.ToString("#,##0.#") & " kg"},
+                {"Tara:", tara.ToString("#,##0.#") & " kg"}
+            }
 
-        ' 3. CUERPO: Datos del Pesaje (Organizados en lista)
-        ' Definimos una pequeña rutina para ahorrar líneas
-        Dim datos As New Dictionary(Of String, String) From {
-        {"Lote:", idBin},
-        {"Recepción:", row.Cells("recepcion").Value.ToString()},
-        {"Ciclo:", row.Cells("etiqueta_ciclo").Value.ToString()},
-        {"Persona:", row.Cells("productor").Value.ToString()},
-        {"Kilos Brutos:", bruto.ToString("#,##0.#") & " kg"},
-        {"Kilos Neto:", neto.ToString("#,##0.#") & " kg"},
-        {"Tara:", row.Cells("tara").Value.ToString() & " kg"}
-    }
+            Dim posXValor As Integer = 140
+            For Each item In datos
+                e.Graphics.DrawString(item.Key, fDatosLabel, Brushes.Black, x, y)
+                e.Graphics.DrawString(item.Value, fDatosValor, Brushes.Black, posXValor, y)
+                y += 26
+            Next
 
-        For Each item In datos
-            e.Graphics.DrawString(item.Key, fDatosLabel, Brushes.Black, x, y)
-            e.Graphics.DrawString(item.Value, fDatosValor, Brushes.Black, x + 100, y)
+            ' 6. KILOS NETOS DESTACADOS
+            y += 5
+            e.Graphics.DrawLine(Pens.Gray, x, y, anchoPapel - x, y)
+            y += 10
+            e.Graphics.DrawString("Kilos Netos:", fDatosLabel, Brushes.Black, x, y)
+            e.Graphics.DrawString(neto.ToString("#,##0.#") & " kg", fNetoValue, Brushes.Black, posXValor, y)
+            y += 32
+            e.Graphics.DrawLine(Pens.Gray, x, y, anchoPapel - x, y)
             y += 20
-        Next
-        y += 50
 
-        ' 4. PARTE INFERIOR: Código de Barras (Ocupando el ancho disponible)
-        Dim bmpBarcode As Bitmap = GenerarImagenBarcode(idBin)
-        If bmpBarcode IsNot Nothing Then
-            ' Ajustamos el dibujo para que ocupe el ancho (dejando márgenes)
-            Dim anchoBarcode As Integer = anchoPapel - (x * 2)
-            e.Graphics.DrawImage(bmpBarcode, x, y, anchoBarcode, 90)
-            y += 80
-        End If
-        y += 30
-        ' 5. FINAL: Timestamp
-        Dim fechaStr As String = DateTime.Now.ToString("dd/MM/yyyy HH:mm:ss")
-        e.Graphics.DrawString(fechaStr, fTimestamp, Brushes.Black, x, y)
+            ' 7. CÓDIGO DE BARRAS INFERIOR
+            Using bmpBarcode As Bitmap = GenerarImagenBarcode(codigoBin)
+                If bmpBarcode IsNot Nothing Then
+                    Dim anchoBarcode As Integer = anchoPapel - (x * 2)
+                    e.Graphics.DrawImage(bmpBarcode, x, y, anchoBarcode, 100)
+                    y += 110
+                End If
+            End Using
+
+            ' 8. FECHA Y HORA REGISTRO
+            Dim fechaVal As String = ObtenerTextoCelda(row, "fecha")
+            Dim horaVal As String = ObtenerTextoCelda(row, "hora")
+            e.Graphics.DrawString($"Fecha Reg: {fechaVal} {horaVal}", fTimestamp, Brushes.Black, x, y)
+            ' e.Graphics.DrawString($"Etiqueta: {etiqueta}", fEtiqueta, Brushes.Black, x, y)
+        End Using
     End Sub
 
-
-
-    Private Sub MostrarVentanaQR_80mm(idBin As String)
-        ' 1. Cálculo de píxeles para 80mm
-        Dim medidaPx As Integer = 302
-        Dim margen As Integer = 10
-
-        ' 2. Configuración del Formulario
-        Dim frmQR As New Form
-        frmQR.Text = "QR 80mm - ID: " & idBin
-        ' Aumentamos el alto para que quepa el código de barras y el texto
-        frmQR.Size = New Size(medidaPx + 40, medidaPx + 200)
-        frmQR.StartPosition = FormStartPosition.CenterScreen
-        frmQR.BackColor = Color.White
-        frmQR.FormBorderStyle = FormBorderStyle.FixedSingle
-        frmQR.MaximizeBox = False
-
-        ' 3. PictureBox para el QR (80x80mm)
-        Dim picQR As New PictureBox
-        picQR.Size = New Size(medidaPx, medidaPx)
-        picQR.Location = New Point(margen, margen)
-        picQR.SizeMode = PictureBoxSizeMode.StretchImage
-
-        Dim escritorQR = New ZXing.BarcodeWriter()
-        escritorQR.Format = ZXing.BarcodeFormat.QR_CODE
-        escritorQR.Options = New ZXing.QrCode.QrCodeEncodingOptions With {
-        .Height = medidaPx,
-        .Width = medidaPx,
-        .Margin = 0
-    }
-        picQR.Image = escritorQR.Write(idBin)
-
-        ' 4. PictureBox para el CÓDIGO DE BARRAS (Pequeño)
-        Dim picBarcode As New PictureBox
-        ' Altura de 90px para que sea discreto
-        picBarcode.Size = New Size(medidaPx, 90)
-        picBarcode.Location = New Point(margen, medidaPx + 20)
-        picBarcode.SizeMode = PictureBoxSizeMode.StretchImage
-
-        Dim escritorBar = New ZXing.BarcodeWriter()
-        escritorBar.Format = ZXing.BarcodeFormat.CODE_128 ' Formato estándar de barras
-        escritorBar.Options = New ZXing.Common.EncodingOptions With {
-        .Height = 50,
-        .Width = medidaPx,
-        .Margin = 2,
-        .PureBarcode = True ' True si quieres solo las barras, False para incluir el número abajo
-    }
-        picBarcode.Image = escritorBar.Write(idBin)
-
-        ' 5. Label para el código numérico (opcional si PureBarcode = False)
-        Dim lblID As New Label
-        lblID.Text = "ID: " & idBin
-        lblID.Font = New Font("Consolas", 14, FontStyle.Bold)
-        lblID.TextAlign = ContentAlignment.TopCenter
-        lblID.Location = New Point(margen, medidaPx + 75)
-        lblID.Size = New Size(medidaPx, 30)
-
-        ' 6. Agregar y mostrar
-        frmQR.Controls.Add(picQR)
-        frmQR.Controls.Add(picBarcode)
-        frmQR.Controls.Add(lblID)
-        frmQR.ShowDialog()
-    End Sub
-
-    ' --- BOTÓN PARA VER PREVIA EN PANTALLA ---
+    ' --- VISTA PREVIA CORREGIDA ---
     Private Sub btnVistaPrevia_Click(sender As Object, e As EventArgs) Handles btnVistaPrevia.Click
         If dgvFinal.CurrentRow Is Nothing Then
-            MessageBox.Show("Seleccione una fila en la tabla para generar la vista previa.")
+            MessageBox.Show("Seleccione una fila en la tabla primero.")
             Return
         End If
 
         Try
-            ' 1. Configurar el documento
             Dim pd As New PrintDocument()
-            ' Definimos el tamaño 80mm x 100mm (en centésimas de pulgada: 315 x 393)
-            pd.DefaultPageSettings.PaperSize = New PaperSize("Custom", 315, 393)
+            ' CORREGIDO: Medida 100x200mm para que la previa concuerde con el diseño
+            pd.DefaultPageSettings.PaperSize = New PaperSize("100x200", 394, 787)
+            pd.DefaultPageSettings.Margins = New Margins(0, 0, 0, 0)
 
-            ' 2. Capturar la fila seleccionada
             Dim filaActual = dgvFinal.CurrentRow
 
-            ' 3. Vincular el evento de dibujo
             AddHandler pd.PrintPage, Sub(s, ev)
-                                         DisenoTicket80x100(ev, filaActual)
+                                         DisenoTicket100x200(ev, filaActual)
                                      End Sub
 
-            ' 4. Configurar y mostrar el cuadro de diálogo
-            Dim ppd As New PrintPreviewDialog()
-            ppd.Document = pd
-            'ppd.Title = "Vista Previa de Ticket - Registro " & filaActual.Cells("id").Value.ToString()
-            ppd.WindowState = FormWindowState.Maximized
-
-            ' Esto corrige un error común donde la previa sale en blanco a veces
+            Dim ppd As New PrintPreviewDialog With {
+                .Document = pd,
+                .WindowState = FormWindowState.Maximized
+            }
             CType(ppd, Form).ShowDialog()
 
         Catch ex As Exception
@@ -338,50 +354,90 @@ Public Class ucTicket
     End Sub
 
     Private Sub btnVerQR_Click(sender As Object, e As EventArgs) Handles btnVerQR.Click
-        If dgvFinal.CurrentRow Is Nothing Then
-            MessageBox.Show("Seleccione una fila primero.")
-            Return
+        If dgvFinal.CurrentRow Is Nothing Then Return
+        MostrarVentanaQR_80mm(dgvFinal.CurrentRow.Cells("codigo").Value.ToString())
+    End Sub
+
+    ' --- MÉTODOS AUXILIARES DE PARSEO SEGURO ---
+    Private Function ObtenerTextoCelda(row As DataGridViewRow, colName As String) As String
+        If row.Cells(colName) IsNot Nothing AndAlso row.Cells(colName).Value IsNot DBNull.Value Then
+            Return row.Cells(colName).Value.ToString()
         End If
+        Return "-"
+    End Function
 
-        ' Obtenemos el ID de la fila seleccionada
-        Dim idSeleccionado As String = dgvFinal.CurrentRow.Cells("codigo").Value.ToString()
+    Private Function ObtenerDecimalCelda(row As DataGridViewRow, colName As String) As Decimal
+        If row.Cells(colName) IsNot Nothing AndAlso row.Cells(colName).Value IsNot DBNull.Value Then
+            Dim val As Decimal
+            If Decimal.TryParse(row.Cells(colName).Value.ToString(), val) Then
+                Return val
+            End If
+        End If
+        Return 0
+    End Function
 
-        ' Llamamos a la ventana emergente
-        MostrarVentanaQR_80mm(idSeleccionado)
+    Private Sub MostrarVentanaQR_80mm(idBin As String)
+        Dim medidaPx As Integer = 302
+        Dim margen As Integer = 10
+
+        Dim frmQR As New Form With {
+            .Text = "QR - ID: " & idBin,
+            .Size = New Size(medidaPx + 40, medidaPx + 200),
+            .StartPosition = FormStartPosition.CenterScreen,
+            .BackColor = Color.White,
+            .FormBorderStyle = FormBorderStyle.FixedSingle,
+            .MaximizeBox = False
+        }
+
+        Dim picQR As New PictureBox With {
+            .Size = New Size(medidaPx, medidaPx),
+            .Location = New Point(margen, margen),
+            .SizeMode = PictureBoxSizeMode.StretchImage
+        }
+
+        Dim escritorQR As New ZXing.BarcodeWriter With {.Format = ZXing.BarcodeFormat.QR_CODE}
+        escritorQR.Options = New ZXing.QrCode.QrCodeEncodingOptions With {.Height = medidaPx, .Width = medidaPx, .Margin = 0}
+        picQR.Image = escritorQR.Write(idBin)
+
+        Dim picBarcode As New PictureBox With {
+            .Size = New Size(medidaPx, 80),
+            .Location = New Point(margen, medidaPx + 15),
+            .SizeMode = PictureBoxSizeMode.StretchImage
+        }
+
+        Dim escritorBar As New ZXing.BarcodeWriter With {.Format = ZXing.BarcodeFormat.CODE_128}
+        escritorBar.Options = New ZXing.Common.EncodingOptions With {.Height = 50, .Width = medidaPx, .Margin = 2, .PureBarcode = True}
+        picBarcode.Image = escritorBar.Write(idBin)
+
+        Dim lblID As New Label With {
+            .Text = "ID: " & idBin,
+            .Font = New Font("Consolas", 14, FontStyle.Bold),
+            .TextAlign = ContentAlignment.TopCenter,
+            .Location = New Point(margen, medidaPx + 100),
+            .Size = New Size(medidaPx, 30)
+        }
+
+        frmQR.Controls.Add(picQR)
+        frmQR.Controls.Add(picBarcode)
+        frmQR.Controls.Add(lblID)
+        frmQR.ShowDialog()
     End Sub
 
     ' --- NAVEGACIÓN ---
     Private Sub btnNuevaRecepcion_Click(sender As Object, e As EventArgs) Handles btnNuevaRecepcion.Click
         Dim frm = DirectCast(Application.OpenForms("Form1"), Form1)
-
-        ' 1. Mantenemos el ID de Recepción y Productor
-        ' 2. Mantenemos el ID de Variedad (Esto es la CLAVE para que no salte al paso 1)
-
-        ' 3. Limpiamos solo el peso para seguridad
-        frm.PesoDesdeBascula = 0
-
-        ' 4. Navegamos a una NUEVA instancia de ucRecepcion
-        ' Al nacer, el ucRecepcion detectará que ya hay una variedad y saltará al Selector
-        frm.NavegarA(New ucRecepcion())
-
-
+        If frm IsNot Nothing Then
+            frm.PesoDesdeBascula = 0
+            frm.NavegarA(New ucRecepcion())
+        End If
     End Sub
 
     Private Sub btnFinal_Click(sender As Object, e As EventArgs) Handles btnFinal.Click
         Dim frm = DirectCast(Application.OpenForms("Form1"), Form1)
-
-        ' En lugar de NavegarA (que destruye el anterior), lo agregamos encima
-        Dim ucFinal As New ucRecepcionFinal(_idRecepcion)
-        ucFinal.Dock = DockStyle.Fill
-
-        ' Agregamos al panel y lo traemos al frente
-        frm.pnlContenedor.Controls.Add(ucFinal)
-        ucFinal.BringToFront()
-
-
-        'Dim frm = DirectCast(Application.OpenForms("Form1"), Form1)
-        ' Ruteo: Regresamos al selector de cantidad para esta misma recepción
-        'frm.NavegarA(New ucRecepcionFinal(_idRecepcion))
-
+        If frm IsNot Nothing Then
+            Dim ucFinal As New ucRecepcionFinal(_idRecepcion) With {.Dock = DockStyle.Fill}
+            frm.pnlContenedor.Controls.Add(ucFinal)
+            ucFinal.BringToFront()
+        End If
     End Sub
 End Class

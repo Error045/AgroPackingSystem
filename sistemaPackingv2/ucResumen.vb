@@ -206,14 +206,14 @@ Public Class ucResumen
             ' 3. GUARDADO TRANSACCIONAL EN CONTENEDORES Y SU HISTORIAL
             Using transaccion As MySqlTransaction = ConexionBD.conexion.BeginTransaction()
                 Try
-                    ' SQL 1: Maestro de contenedores (Ajustado estrictamente a tu CREATE TABLE)
+                    ' SQL 1: Maestro de contenedores (Ajustado estrictamente a tu CREATE TABLE)  'etiqueta_ciclo, ' @etiqueta,
                     Dim sqlMaster As String = "INSERT INTO contenedores (" &
             "recepciones_id, tipos_contenedores_id, productos_id, variedades_id, " &
-            "calibres_id, ciclo, etiqueta_ciclo, kilos_brutos, kilos_netos, " &
+            "calibres_id, ciclo,  kilos_brutos, kilos_netos, " &
             "tipos_ubicaciones_id, estados_contenedores_id, fecha_registro, users_id_registro,estado) " &
             "VALUES (" &
             "@idR, @idTipoCont, @idProduc, @idVar, " &
-            "@idCalibre, @nCiclo, @etiqueta, @bruto, @neto, " &
+            "@idCalibre, @nCiclo, @bruto, @neto, " &
             "@idUbicacion, @idEstado, CURDATE(), @idUser,1)"
 
                     ' SQL 2: Historial unificado de movimientos
@@ -246,6 +246,8 @@ Public Class ucResumen
                             cmdMaster.Parameters.AddWithValue("@neto", row.Cells("colNeto").Value)
                             cmdMaster.Parameters.AddWithValue("@idUbicacion", idUbicacion)
                             cmdMaster.Parameters.AddWithValue("@idEstado", idEstadoInicial)
+                            '   cmdMaster.Parameters.AddWithValue("@fecha", DateTime.Today)
+                            '  cmdMaster.Parameters.AddWithValue("@hora", DateTime.Now.TimeOfDay)
                             cmdMaster.Parameters.AddWithValue("@idUser", idUsuarioActual)
 
                             cmdMaster.ExecuteNonQuery()
