@@ -207,7 +207,7 @@ Partial Class ucCrearOrdenDespacho
         Me.Controls.Add(Me.cmbTIpoOperacion)
         Me.Controls.Add(Me.cmbDespachos)
         Me.Name = "ucCrearOrdenDespacho"
-        Me.Size = New System.Drawing.Size(1140, 837)
+        Me.Size = New System.Drawing.Size(1128, 837)
         CType(Me.dgvDestino, System.ComponentModel.ISupportInitialize).EndInit()
         CType(Me.dgvReporte, System.ComponentModel.ISupportInitialize).EndInit()
         Me.ResumeLayout(False)

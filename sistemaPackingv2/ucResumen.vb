@@ -41,7 +41,7 @@ Public Class ucResumen
 
             ' --- 4. CONFIGURACIÓN DE LISTAS FILTRADAS EN EL GRID ---
             dgvResumen.Rows.Clear()
-            CargarListasEnGrid(idTipo) ' Aquí ejecutamos tu lógica de Select Case
+            CargarListasEnGrid(idTipo, idVar) ' Aquí ejecutamos tu lógica de Select Case
 
             ' --- 5. VALIDACIÓN DE SEGURIDAD (CRÍTICO) ---
             ' Obtenemos los DataSources de las columnas ComboBox para validar que tengan datos
@@ -96,7 +96,7 @@ Public Class ucResumen
     End Sub
 
     ' Método para cargar las listas en las columnas del Grid
-    Private Sub CargarListasEnGrid(idTipo As Integer)
+    Private Sub CargarListasEnGrid(idTipo As Integer, idVar As Integer)
         Try
             ' 1. Determinamos el comportamiento según el tipo de recepción
             Dim esFlujoEstandar As Boolean = False
@@ -110,14 +110,24 @@ Public Class ucResumen
 
             ' 2. Definir SQL de Calibres
             Dim sqlCalibres As String = If(esFlujoEstandar,
-                                   "SELECT id, nombre FROM calibres WHERE id = 9",
-                                   "SELECT id, nombre FROM calibres WHERE id <> 9")
+                                   "SELECT id, nombre FROM calibres WHERE variedades_id = @idVar AND estados_calibres_id = 2",
+                                   "SELECT id, nombre FROM calibres WHERE variedades_id = @idVar AND estados_calibres_id <> 2")
+
+
 
             Dim dtCalibres As DataTable = ObtenerDatos(sqlCalibres)
+            Using cmd As New MySqlCommand(sqlCalibres, ConexionBD.conexion)
+                cmd.Parameters.AddWithValue("@idVar", idVar)
+                Dim da As New MySqlDataAdapter(cmd)
+                da.Fill(dtCalibres)
+            End Using
+
             Dim colCal As DataGridViewComboBoxColumn = DirectCast(dgvResumen.Columns("colCalibre"), DataGridViewComboBoxColumn)
             colCal.DataSource = dtCalibres
             colCal.DisplayMember = "nombre"
             colCal.ValueMember = "id"
+
+
 
             ' 3. Definir SQL de Ubicaciones
             Dim sqlUbicaciones As String = If(esFlujoEstandar,
