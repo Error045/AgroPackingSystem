@@ -295,7 +295,7 @@ Public Class ucRecepcionEstado
 			ConexionBD.Abrir()
 
 			' 2. VALIDACIÓN: Comprobar si existen detalles asociados
-			Dim sqlValidacion As String = "SELECT COUNT(*) FROM recepciones_detalles WHERE recepciones_id = @id"
+			Dim sqlValidacion As String = "SELECT COUNT(*) FROM contenedores WHERE recepciones_id = @id"
 			Dim conteoDetalles As Integer
 
 			Using cmdCheck As New MySqlCommand(sqlValidacion, ConexionBD.conexion)
