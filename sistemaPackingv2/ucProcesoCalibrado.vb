@@ -1,4 +1,6 @@
 ﻿Imports MySql.Data.MySqlClient
+Imports System.Drawing.Printing
+Imports ZXing
 
 Public Class ucProcesoCalibrado
 
@@ -29,13 +31,6 @@ Public Class ucProcesoCalibrado
         cmbProceso.ValueMember = "id"
         cmbProceso.SelectedIndex = -1
 
-        ' Auto-selección inicial
-        'If dtProceso.Rows.Count > 0 Then
-        'cmbProceso.SelectedIndex = 0
-        'Else
-        'cmbProceso.SelectedIndex = -1
-        ' End If
-
         cargando = False ' Desbloqueamos eventos
 
         ' Forzamos la carga del hijo (Producto) basándonos en lo que quedó seleccionado
@@ -45,7 +40,6 @@ Public Class ucProcesoCalibrado
     Private Sub cmbProceso_SelectedIndexChanged(sender As Object, e As EventArgs) Handles cmbProceso.SelectedIndexChanged
         ' Si estamos cargando datos por código, ignoramos el click del usuario
         If cargando Then Return
-
         LlenarComboProducto()
     End Sub
 
@@ -88,13 +82,10 @@ Public Class ucProcesoCalibrado
 
         ' Forzamos la carga del nieto (Variedad)
         LlenarComboVariedad()
-        ' LlenarComboCalibre() '---------------------------------------------
-
     End Sub
 
     Private Sub cmbProducto_SelectedIndexChanged(sender As Object, e As EventArgs) Handles cmbProducto.SelectedIndexChanged
         If cargando Then Return
-
         LlenarComboVariedad()
     End Sub
 
@@ -135,171 +126,233 @@ Public Class ucProcesoCalibrado
         End If
 
         cargando = False ' Desbloqueamos eventos
-
-        ' <-- NUEVO: Forzamos la carga del último eslabón de la cadena (Calibre)
         LlenarComboCalibre()
     End Sub
-
 
     Private Sub cmbVariedad_SelectedIndexChanged(sender As Object, e As EventArgs) Handles cmbVariedad.SelectedIndexChanged
-        ' Si estamos cargando datos por código, ignoramos el disparo involuntario
         If cargando Then Return
-
-        ' Cargamos los calibres correspondientes a la variedad seleccionada
         LlenarComboCalibre()
     End Sub
 
-
-    ' ---------------------------------------------------------
     ' 5. LÓGICA DEL COMBO CALIBRE
-    ' ---------------------------------------------------------
     Private Sub LlenarComboCalibre()
         cargando = True
         cmbCalibre.DataSource = Nothing
 
-        ' Validamos que el producto esté seleccionado para traer sus calibres
         If cmbVariedad.SelectedValue IsNot Nothing AndAlso IsNumeric(cmbVariedad.SelectedValue) Then
-
             Dim idVariedad As Integer = Convert.ToInt32(cmbVariedad.SelectedValue)
 
-            ' Consulta para traer los 10-15 registros de calibres
             Dim sqlCalibre As String = "SELECT id,nombre FROM calibres WHERE variedades_id = @varId"
-
             Dim dtCalibres As DataTable = ObtenerDatos(sqlCalibre, {New MySqlParameter("@varId", idVariedad)})
 
             cmbCalibre.DisplayMember = "nombre"
             cmbCalibre.ValueMember = "id"
             cmbCalibre.DataSource = dtCalibres
-
-            ' FORZAR SELECCIÓN MANUAL:
-            ' Al ponerlo en -1, el combo aparecerá en blanco y el usuario 
-            ' tendrá que desplegarlo y elegir uno obligatoriamente.
             cmbCalibre.SelectedIndex = -1
         End If
 
         cargando = False
     End Sub
 
-    ' Este evento se disparará cuando el usuario finalmente elija un calibre
     Private Sub cmbCalibre_SelectedIndexChanged(sender As Object, e As EventArgs) Handles cmbCalibre.SelectedIndexChanged
         If cargando Then Return
-
-        ' Validamos que haya una selección real hecha por el usuario
-        If cmbCalibre.SelectedIndex <> -1 Then
-            ' Aquí puedes colocar la lógica para "buscar la información" 
-            ' o habilitar el botón de procesar/guardar.
-            Dim idCalibre As Integer = Convert.ToInt32(cmbCalibre.SelectedValue)
-            ' Ejemplo: CargarDatosSegunCalibre(idCalibre)
-        End If
     End Sub
 
-    ' ---------------------------------------------------------
-    ' 6. LÓGICA DEL COMBO CONTENEDOR
-    ' ---------------------------------------------------------
-    'Private Sub LlenarComboContenedor()
-    '    cargando = True
-    '    cmbContenedor.DataSource = Nothing
-
-    ' Consulta directa a la tabla contenedores
-    'Dim sql As String = "SELECT id, nombre, tara FROM contenedores WHERE estado = 1"
-
-    'Dim dtContenedores As DataTable = ObtenerDatos(sql)
-
-    'If dtContenedores IsNot Nothing Then
-    '       cmbContenedor.DisplayMember = "nombre"
-    '      cmbContenedor.ValueMember = "id"
-    '      cmbContenedor.DataSource = dtContenedores
-
-    ' Forzamos selección manual (vacío al inicio)
-    '     cmbContenedor.SelectedIndex = -1
-    'End If
-
-    '    cargando = False
-    ' End Sub
-
-    ' Private Sub cmbContenedor_SelectedIndexChanged(sender As Object, e As EventArgs)
-    'If cargando Then Return
-
-    '' Si el usuario selecciona un contenedor, puedes capturar el ID y la Tara
-    ' If cmbContenedor.SelectedIndex <> -1 Then
-    ' Dim idContenedor As Integer = Convert.ToInt32(cmbContenedor.SelectedValue)
-
-    ' Si necesitas la tara para un cálculo automático:
-    ' Dim fila As DataRowView = DirectCast(cmbContenedor.SelectedItem, DataRowView)
-    ' txtTara.Text = fila("tara").ToString()
-    ' End If
-    ' End Sub
-
-    ' 7. LÓGICA DE REGISTRO CON VALIDACIÓN
+    ' 7. LÓGICA DE REGISTRO, IMPRESIÓN Y VALIDACIÓN
     Private Sub btnRegistrar_Click(sender As Object, e As EventArgs) Handles btnRegistrar.Click
 
-        ' --- VALIDACIÓN DE CAMPOS SELECCIONADOS ---
-        ' Verificamos que ninguno de los combos esté en su estado inicial (-1) o nulo
+        ' --- VALIDACIÓN DE CAMPOS ---
         Dim errorMensaje As String = ""
+        If cmbProceso.SelectedValue Is Nothing OrElse cmbProceso.SelectedIndex = -1 Then errorMensaje &= "- Debe seleccionar un Proceso." & vbCrLf
+        If cmbProducto.SelectedValue Is Nothing OrElse cmbProducto.SelectedIndex = -1 Then errorMensaje &= "- Debe seleccionar un Producto." & vbCrLf
+        If cmbVariedad.SelectedValue Is Nothing OrElse cmbVariedad.SelectedIndex = -1 Then errorMensaje &= "- Debe seleccionar una Variedad." & vbCrLf
+        If cmbCalibre.SelectedValue Is Nothing OrElse cmbCalibre.SelectedIndex = -1 Then errorMensaje &= "- Debe seleccionar un Calibre." & vbCrLf
 
-        If cmbProceso.SelectedValue Is Nothing OrElse cmbProceso.SelectedIndex = -1 Then
-            errorMensaje &= "- Debe seleccionar un Proceso." & vbCrLf
-        End If
-
-        If cmbProducto.SelectedValue Is Nothing OrElse cmbProducto.SelectedIndex = -1 Then
-            errorMensaje &= "- Debe seleccionar un Producto." & vbCrLf
-        End If
-
-        If cmbVariedad.SelectedValue Is Nothing OrElse cmbVariedad.SelectedIndex = -1 Then
-            errorMensaje &= "- Debe seleccionar una Variedad." & vbCrLf
-        End If
-
-        If cmbCalibre.SelectedValue Is Nothing OrElse cmbCalibre.SelectedIndex = -1 Then
-            errorMensaje &= "- Debe seleccionar un Calibre." & vbCrLf
-        End If
-
-        ' Si hay errores, mostramos un solo mensaje y detenemos la ejecución
         If Not String.IsNullOrEmpty(errorMensaje) Then
-            MessageBox.Show("Faltan datos requeridos:" & vbCrLf & vbCrLf & errorMensaje,
-                            "Validación de Selección",
-                            MessageBoxButtons.OK,
-                            MessageBoxIcon.Warning)
+            MessageBox.Show("Faltan datos requeridos:" & vbCrLf & vbCrLf & errorMensaje, "Validación", MessageBoxButtons.OK, MessageBoxIcon.Warning)
             Return
         End If
 
-        ' --- PROCESO DE INSERCIÓN (Si las validaciones pasan) ---
+        ' --- PROCESO DE INSERCIÓN Y CAPTURA DEL ID ---
+        Dim nuevoIdContenedor As Integer = 0
         Try
-            Dim sql As String = "INSERT INTO contenedores (" &
-                                "   recepciones_id, productos_id, variedades_id, calibres_id, " &
-                                "   tipos_ubicaciones_id, estados_contenedores_id, fecha_registro, users_id_registro,estado,created_at, updated_at) " &
-                                "SELECT " &
-                                "   recepciones_id, @prodId, @varId, @calId, " &
-                                "   3 , 4, NOW(), 1 , 1, NOW(), NOW() " &
-                                "FROM procesos " &
-                                "WHERE id = @procId;" &
-                                "   INSERT INTO contenedores_historial (" &
-                                "       tipos_movimientos_id, contenedores_id, " &
-                                "       tipos_ubicaciones_id, estados_contenedores_id, " &
-                                "       fecha_movimiento, users_id, estado,created_at,updated_at) " &
-                                "   VALUES (" &
-                                "       1, LAST_INSERT_ID(), " & ' El sistema toma el ID recién creado arriba
-                                "       3, 4, NOW(), 1, 1, NOW(),NOW());"
+            ConexionBD.Abrir()
 
+            ' 1. Insertamos el contenedor y capturamos su nuevo ID con LAST_INSERT_ID()
+            Dim sqlContenedor As String = "INSERT INTO contenedores (recepciones_id, productos_id, variedades_id, calibres_id, tipos_ubicaciones_id, estados_contenedores_id, fecha_registro, users_id_registro, estado, created_at, updated_at) " &
+                                          "SELECT recepciones_id, @prodId, @varId, @calId, 3, 4, NOW(), 1, 1, NOW(), NOW() FROM procesos WHERE id = @procId; " &
+                                          "SELECT LAST_INSERT_ID();"
 
-            Dim parametros As MySqlParameter() = {
-                New MySqlParameter("@procId", cmbProceso.SelectedValue),
-                New MySqlParameter("@prodId", cmbProducto.SelectedValue),
-                New MySqlParameter("@varId", cmbVariedad.SelectedValue),
-                New MySqlParameter("@calId", cmbCalibre.SelectedValue)
-            }
+            Using cmd As New MySqlCommand(sqlContenedor, ConexionBD.conexion)
+                cmd.Parameters.AddWithValue("@procId", cmbProceso.SelectedValue)
+                cmd.Parameters.AddWithValue("@prodId", cmbProducto.SelectedValue)
+                cmd.Parameters.AddWithValue("@varId", cmbVariedad.SelectedValue)
+                cmd.Parameters.AddWithValue("@calId", cmbCalibre.SelectedValue)
 
-            ' Ejecución usando tu método de base de datos
-            EjecutarComando(sql, parametros)
+                ' ExecuteScalar nos devuelve el ID recién creado
+                nuevoIdContenedor = Convert.ToInt32(cmd.ExecuteScalar())
+            End Using
 
-            MessageBox.Show("Registro de calibración completado con éxito.", "Guardado", MessageBoxButtons.OK, MessageBoxIcon.Information)
+            ' 2. Insertamos el historial usando el ID capturado
+            Dim sqlHistorial As String = "INSERT INTO contenedores_historial (tipos_movimientos_id, contenedores_id, tipos_ubicaciones_id, estados_contenedores_id, fecha_movimiento, users_id, estado, created_at, updated_at) " &
+                                         "VALUES (1, @idCont, 3, 4, NOW(), 1, 1, NOW(), NOW());"
 
-            ' Limpiamos la selección del calibre para el siguiente registro
-            cmbCalibre.SelectedIndex = -1
+            Using cmd2 As New MySqlCommand(sqlHistorial, ConexionBD.conexion)
+                cmd2.Parameters.AddWithValue("@idCont", nuevoIdContenedor)
+                cmd2.ExecuteNonQuery()
+            End Using
+
+            ConexionBD.Cerrar()
+
+            ' --- OBTENER DATOS DE LA VISTA PARA IMPRESIÓN ---
+            ' Consultamos tu nueva vista usando el ID recién creado
+            Dim sqlVista As String = "SELECT * FROM vw_calibrado_detalles_resumen WHERE codigo = @id"
+            Dim dtTicket As DataTable = ObtenerDatos(sqlVista, {New MySqlParameter("@id", nuevoIdContenedor)})
+
+            If dtTicket.Rows.Count > 0 Then
+                Dim fila As DataRow = dtTicket.Rows(0)
+
+                ' Llenamos el diccionario exactamente con los datos de la vista
+                Dim datosTicket As New Dictionary(Of String, String) From {
+                    {"codigo", fila("codigo").ToString()},
+                    {"recepcion", fila("recepcion").ToString()},
+                    {"tipo", fila("tipo").ToString()},
+                    {"proceso", fila("proceso").ToString()},
+                    {"productor", fila("productor").ToString()},
+                    {"producto", fila("producto").ToString()},
+                    {"variedad", fila("variedad").ToString()},
+                    {"calibre", fila("calibre").ToString()},
+                    {"numero", fila("numero").ToString()},
+                    {"fecha", If(IsDBNull(fila("fecha")), DateTime.Now.ToString("dd/MM/yyyy"), Convert.ToDateTime(fila("fecha")).ToString("dd/MM/yyyy"))},
+                    {"hora", fila("hora").ToString()}
+                }
+
+                ' Mandamos a imprimir usando el nuevo diseño
+                Dim pd As New PrintDocument()
+                pd.DefaultPageSettings.PaperSize = New PaperSize("100x150", 394, 590)
+                pd.DefaultPageSettings.Margins = New Margins(0, 0, 0, 0)
+                AddHandler pd.PrintPage, Sub(s, ev)
+                                             DisenoTicketQR_Grande(ev, datosTicket)
+                                         End Sub
+                pd.Print()
+
+                MessageBox.Show("Registro de calibración completado e impreso con éxito.", "Guardado", MessageBoxButtons.OK, MessageBoxIcon.Information)
+                cmbCalibre.SelectedIndex = -1
+            Else
+                MessageBox.Show("El registro se guardó, pero no se encontró en la vista para imprimir.", "Aviso", MessageBoxButtons.OK, MessageBoxIcon.Warning)
+            End If
 
         Catch ex As Exception
-            MessageBox.Show("Error al guardar en la base de datos: " & ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error)
+            If ConexionBD.conexion.State = ConnectionState.Open Then ConexionBD.Cerrar()
+            MessageBox.Show("Error al guardar/imprimir: " & ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error)
         End Try
     End Sub
 
+    ' =========================================================================
+    ' ====================== MÉTODOS DE IMPRESIÓN =============================
+    ' =========================================================================
+
+    Private Function GenerarImagenBarcode(texto As String) As Bitmap
+        Try
+            Dim escritor As New BarcodeWriter With {
+                .Format = BarcodeFormat.CODE_128
+            }
+            escritor.Options = New Common.EncodingOptions With {
+                .Width = 350,
+                .Height = 100,
+                .Margin = 2
+            }
+            Return escritor.Write(texto)
+        Catch ex As Exception
+            Return Nothing
+        End Try
+    End Function
+
+    ' --- DISEÑO DEL TICKET QR GIGANTE (100mm x 150mm) ---
+    Private Sub DisenoTicketQR_Grande(e As PrintPageEventArgs, datos As Dictionary(Of String, String))
+        Dim anchoPapel As Integer = 394
+        Dim x As Integer = 20
+        Dim y As Integer = 20
+
+        Using fCalibreNumero As New Font("Arial", 38, FontStyle.Bold),
+          fCalibreLabel As New Font("Arial", 8, FontStyle.Bold),
+          fDatosLabel As New Font("Arial", 11, FontStyle.Bold),
+          fDatosValor As New Font("Arial", 11),
+          fTimestamp As New Font("Arial", 9, FontStyle.Italic)
+
+            Dim codigoBin As String = datos("codigo")
+
+            ' 1. CÓDIGO QR GIGANTE A LA IZQUIERDA (220x220 px)
+            Dim tamQR As Integer = 220
+            Dim escritorQR As New ZXing.BarcodeWriter With {
+            .Format = ZXing.BarcodeFormat.QR_CODE
+        }
+            escritorQR.Options = New ZXing.QrCode.QrCodeEncodingOptions With {
+            .Height = tamQR,
+            .Width = tamQR,
+            .Margin = 0
+        }
+            Using bmpQR As Bitmap = escritorQR.Write(codigoBin)
+                If bmpQR IsNot Nothing Then
+                    e.Graphics.DrawImage(bmpQR, x, y, tamQR, tamQR)
+                End If
+            End Using
+
+            ' 2. RECUADRO DE CALIBRE (NÚMERO) A LA DERECHA
+            Dim numCalibre As String = datos("numero")
+            Dim recCalibre As New Rectangle(anchoPapel - 100, y, 80, 75)
+            e.Graphics.DrawRectangle(Pens.Black, recCalibre)
+
+            Dim tamCalLabel = e.Graphics.MeasureString("CALIBRE", fCalibreLabel)
+            e.Graphics.DrawString("CALIBRE", fCalibreLabel, Brushes.Black, recCalibre.X + (80 - tamCalLabel.Width) / 2, recCalibre.Y + 4)
+
+            Dim tamCalNum = e.Graphics.MeasureString(numCalibre, fCalibreNumero)
+            e.Graphics.DrawString(numCalibre, fCalibreNumero, Brushes.Black, recCalibre.X + (80 - tamCalNum.Width) / 2, recCalibre.Y + 18)
+
+            ' Avanzamos Y justo debajo del QR
+            y += tamQR + 10
+
+            ' LÍNEA SEPARADORA
+            e.Graphics.DrawLine(Pens.Black, x, y, anchoPapel - x, y)
+            y += 10
+
+            ' 3. LISTA DE DATOS SOLICITADOS
+            Dim lineasDatos As New Dictionary(Of String, String) From {
+            {"Código ID:", codigoBin},
+            {"Recepción:", datos("recepcion")},
+            {"Tipo:", datos("tipo")},
+            {"Proceso:", datos("proceso")}, ' <--- AQUÍ SE AGREGÓ EL PROCESO
+            {"Productor:", datos("productor")},
+            {"Producto:", datos("producto")},
+            {"Variedad:", datos("variedad")},
+            {"Calibre:", datos("calibre")}
+        }
+
+            Dim posXValor As Integer = 120 ' Tabulación para que los valores queden alineados
+            For Each item In lineasDatos
+                e.Graphics.DrawString(item.Key, fDatosLabel, Brushes.Black, x, y)
+                e.Graphics.DrawString(item.Value, fDatosValor, Brushes.Black, posXValor, y)
+                y += 24 ' Espaciado entre lineas
+            Next
+
+            ' LÍNEA SEPARADORA
+            y += 5
+            e.Graphics.DrawLine(Pens.Gray, x, y, anchoPapel - x, y)
+            y += 10
+
+            ' 4. CÓDIGO DE BARRAS INFERIOR
+            Using bmpBarcode As Bitmap = GenerarImagenBarcode(codigoBin)
+                If bmpBarcode IsNot Nothing Then
+                    Dim anchoBarcode As Integer = anchoPapel - (x * 2)
+                    ' Reducimos la altura del barcode a 60px para optimizar el espacio inferior
+                    e.Graphics.DrawImage(bmpBarcode, x, y, anchoBarcode, 60)
+                    y += 65
+                End If
+            End Using
+
+            ' 5. FECHA Y HORA AL FINAL
+            e.Graphics.DrawString($"Fecha: {datos("fecha")} {datos("hora")}", fTimestamp, Brushes.Black, x, y)
+        End Using
+    End Sub
 
 End Class

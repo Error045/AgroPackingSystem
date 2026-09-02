@@ -53,7 +53,7 @@ Public Class ucCalibradoValidacion
         Try
             ' La consulta ahora filtra nativamente por estados_procesos_id = 1 (Procesos activos)
             Dim sql As String =
-                "SELECT a.id As 'ID Ticket', prod.nombre As Producto, v.nombre As Variedad, cal.nombre As Calibre " &
+                "SELECT a.id As 'Codigo', prod.nombre As Producto, v.nombre As Variedad, cal.nombre As Calibre " &
                 "FROM contenedores a " &
                 "INNER JOIN recepciones b ON a.recepciones_id = b.id " &
                 "INNER JOIN procesos c ON b.id = c.recepciones_id " &
@@ -120,7 +120,7 @@ Public Class ucCalibradoValidacion
 
                         ' Quitar el bin escaneado de la lista de "Disponibles"
                         If dtDisponibles IsNot Nothing Then
-                            Dim filas() As DataRow = dtDisponibles.Select("[ID Ticket] = " & idActual)
+                            Dim filas() As DataRow = dtDisponibles.Select("[Codigo] = " & idActual)
                             For Each filaEncontrada In filas
                                 dtDisponibles.Rows.Remove(filaEncontrada)
                             Next
