@@ -18,6 +18,7 @@ Public Class ucCalibradoValidacion
     End Sub
 
     Private Sub ucCalibradoValidacion_Load(sender As Object, e As EventArgs) Handles MyBase.Load
+        txtBusqueda.Focus()
         If Not Me.DesignMode Then
             ' 🟢 Modificado: Ya no pasamos un ID en duro, cargará todos los disponibles en procesos activos
             CargarBinesDisponibles()
@@ -147,7 +148,7 @@ Public Class ucCalibradoValidacion
             If filaParaBorrar IsNot Nothing Then
                 ListaValidados.Remove(filaParaBorrar)
 
-                ' 🟢 Modificado: Ya no pasamos el 9
+
                 CargarBinesDisponibles()
             End If
 
@@ -174,5 +175,11 @@ Public Class ucCalibradoValidacion
         CargarBinesDisponibles()
     End Sub
 
+    Private Sub dgvDisponibles_CellContentClick(sender As Object, e As DataGridViewCellEventArgs) Handles dgvDisponibles.CellContentClick
 
+    End Sub
+
+    Private Sub txtBusqueda_TextChanged(sender As Object, e As EventArgs) Handles txtBusqueda.TextChanged
+
+    End Sub
 End Class

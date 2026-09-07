@@ -58,7 +58,7 @@ Partial Class ucCalibradoValidacion
         Me.txtBusqueda.Location = New System.Drawing.Point(303, 116)
         Me.txtBusqueda.Name = "txtBusqueda"
         Me.txtBusqueda.Size = New System.Drawing.Size(329, 38)
-        Me.txtBusqueda.TabIndex = 2
+        Me.txtBusqueda.TabIndex = 0
         '
         'btnProcederPesaje
         '

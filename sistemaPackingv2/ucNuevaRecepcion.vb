@@ -1,4 +1,5 @@
 ﻿Imports System.Transactions
+Imports System.Windows.Forms.VisualStyles.VisualStyleElement
 Imports MySql.Data.MySqlClient
 
 Public Class ucNuevaRecepcion
@@ -22,15 +23,20 @@ Public Class ucNuevaRecepcion
         cmbPersona.ValueMember = "personas_id"
         cmbPersona.SelectedIndex = -1 ' Empieza vacío
 
-	End Sub
+        cmbPersona.DropDownStyle = ComboBoxStyle.DropDownList
+
+        ' Define el límite visual a 15 elementos
+        cmbPersona.MaxDropDownItems = 10
+
+        ' Activa el ajuste de altura automático para evitar texto cortado
+        cmbPersona.IntegralHeight = False
+
+    End Sub
 
 
 
 
 
-	Private Sub cmbPersona_SelectedIndexChanged(sender As Object, e As EventArgs) Handles cmbPersona.SelectedIndexChanged
-
-	End Sub
 
 
 

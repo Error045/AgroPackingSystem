@@ -1,6 +1,6 @@
 ﻿Imports System.Transactions
 Imports MySql.Data.MySqlClient
-Imports System.Drawing
+'Imports System.Drawing 
 Imports System.Drawing.Printing
 Imports ZXing
 
@@ -215,13 +215,26 @@ Public Class ucUbicacion
 
             RaiseEvent LoteGuardadoExitosamente()
 
+            ' 🟢 REGRESAR A ucCalibradoPesaje DIRECTAMENTE
+            Dim panelPadre As Control = Me.Parent
+            If panelPadre IsNot Nothing Then
+                panelPadre.Controls.Clear()
+
+                Dim ucCalibrado As New ucCalibradoPesaje()
+                ucCalibrado.Dock = DockStyle.Fill
+                panelPadre.Controls.Add(ucCalibrado)
+            End If
+
         Catch ex As Exception
             If transaccion IsNot Nothing Then transaccion.Rollback()
             MessageBox.Show("Error al guardar. Se cancelaron los cambios." & vbCrLf & "Detalle: " & ex.Message, "Error BD", MessageBoxButtons.OK, MessageBoxIcon.Error)
         Finally
             ConexionBD.Cerrar()
         End Try
+
+
     End Sub
+
 
     ' -------------------------------------------------------------------------
     ' SECCIÓN DE IMPRESIÓN
@@ -239,7 +252,12 @@ Public Class ucUbicacion
                 FilaActualImprimir = dtTicket.Rows(0)
 
                 Dim pd As New PrintDocument()
-                ' pd.PrinterSettings.PrinterName = "NombreDeTuImpresoraTermica" ' Descomentar y ajustar si es necesario
+
+                ' 🔥 AQUÍ ESTÁ LA CORRECCIÓN: AGREGAR EL TAMAÑO Y MÁRGENES QUE SÍ FUNCIONAN 🔥
+                pd.DefaultPageSettings.PaperSize = New Printing.PaperSize("100x150", 394, 590)
+                pd.DefaultPageSettings.Margins = New Printing.Margins(0, 0, 0, 0)
+
+                ' pd.PrinterSettings.PrinterName = "NombreDeTuImpresoraTermica" ' Descomentar si es necesario
                 AddHandler pd.PrintPage, AddressOf PrintDocument_PrintPage
                 pd.Print()
             End If
@@ -251,48 +269,26 @@ Public Class ucUbicacion
         DisenoTicket100x200(e, FilaActualImprimir)
     End Sub
 
-    Private Sub ImprimirTicketIndividual(row As DataGridViewRow)
-        Dim pd As New PrintDocument()
 
-        ' Configuración a 100mm x 200mm (394 x 787 centésimas de pulgada)
-        pd.DefaultPageSettings.PaperSize = New PaperSize("100x200", 394, 787)
-        pd.DefaultPageSettings.Margins = New Margins(0, 0, 0, 0)
-        pd.OriginAtMargins = False
-
-        ' Para invocar con DataRow o DataGridViewRow según donde lo uses:
-        Dim filaSeleccionada = row
-        AddHandler pd.PrintPage, Sub(sender, e)
-                                     ' Si estás usando DataRow proveniente de la Vista:
-                                     ' DisenoTicket100x200(e, CType(filaSeleccionada.DataBoundItem, DataRowView).Row)
-                                     DisenoTicket100x200(e, filaSeleccionada)
-                                 End Sub
-        pd.Print()
-    End Sub
-
-    Private Sub DisenoTicket100x200(e As PrintPageEventArgs, row As Object)
-        ' 🟢 1. NEUTRALIZAR MÁRGENES FÍSICOS DE LA IMPRESORA (Pone el origen 0,0 en el borde real del papel)
-        e.Graphics.TranslateTransform(-e.PageSettings.HardMarginX, -e.PageSettings.HardMarginY)
-
+    ' --- DISEÑO DEL TICKET (FUENTE SQL + PROCESO CON MEDIDAS CORRECTAS) ---
+    Private Sub DisenoTicket100x200(e As PrintPageEventArgs, row As DataRow)
         Dim anchoPapel As Integer = 394
-        Dim x As Integer = 10 ' Reducido para aprovechar el ancho real
-        Dim y As Integer = 10 ' Reducido para evitar desfase superior
+        Dim x As Integer = 20
+        Dim y As Integer = 20
 
-        Using fTitulo As New Font("Arial", 12, FontStyle.Bold),
-          fCalibreNumero As New Font("Arial", 32, FontStyle.Bold),
+        ' 1. USAMOS LAS MISMAS FUENTES DEL CÓDIGO QUE FUNCIONA
+        Using fTitulo As New Font("Arial", 14, FontStyle.Bold),
+          fCalibreNumero As New Font("Arial", 38, FontStyle.Bold),
           fCalibreLabel As New Font("Arial", 8, FontStyle.Bold),
-          fDatosLabel As New Font("Arial", 10, FontStyle.Bold),
-          fDatosValor As New Font("Arial", 10),
-          fNetoValue As New Font("Arial", 14, FontStyle.Bold),
-          fTimestamp As New Font("Arial", 8, FontStyle.Italic)
+          fDatosLabel As New Font("Arial", 11, FontStyle.Bold),
+          fDatosValor As New Font("Arial", 11),
+          fNetoValue As New Font("Arial", 15, FontStyle.Bold),
+          fTimestamp As New Font("Arial", 9, FontStyle.Italic)
 
-            ' Funciones auxiliares de lectura según el tipo de objeto recibido (DataRow o DataGridViewRow)
+            ' Funciones para leer de SQL (DataRow)
             Dim GetStr = Function(colName As String) As String
-                             If TypeOf row Is DataGridViewRow Then
-                                 Dim r = CType(row, DataGridViewRow)
-                                 Return If(r.Cells(colName).Value IsNot Nothing, r.Cells(colName).Value.ToString(), "-")
-                             ElseIf TypeOf row Is DataRow Then
-                                 Dim r = CType(row, DataRow)
-                                 Return If(r.Table.Columns.Contains(colName) AndAlso Not IsDBNull(r(colName)), r(colName).ToString(), "-")
+                             If row.Table.Columns.Contains(colName) AndAlso Not IsDBNull(row(colName)) Then
+                                 Return row(colName).ToString()
                              End If
                              Return "-"
                          End Function
@@ -307,48 +303,49 @@ Public Class ucUbicacion
             ' 0. LEER EL ID
             Dim codigoBin As String = GetStr("codigo")
 
-            ' 1. CÓDIGO QR A LA IZQUIERDA
+            ' 1. CÓDIGO QR (75x75 como el que funciona)
             Dim escritorQR As New ZXing.BarcodeWriter With {.Format = ZXing.BarcodeFormat.QR_CODE}
-            escritorQR.Options = New ZXing.QrCode.QrCodeEncodingOptions With {.Height = 70, .Width = 70, .Margin = 0}
+            escritorQR.Options = New ZXing.QrCode.QrCodeEncodingOptions With {.Height = 75, .Width = 75, .Margin = 0}
             Using bmpQR As Bitmap = escritorQR.Write(codigoBin)
                 If bmpQR IsNot Nothing Then
-                    e.Graphics.DrawImage(bmpQR, x, y, 70, 70)
+                    e.Graphics.DrawImage(bmpQR, x, y, 75, 75)
                 End If
             End Using
 
-            ' 2. RECUADRO DE CALIBRE A LA DERECHA (Ubicado dentro del margen visible)
+            ' 2. RECUADRO DE CALIBRE (Mismas medidas: 80x75)
             Dim numCalibre As String = GetStr("numero")
-            Dim recCalibre As New Rectangle(anchoPapel - 90, y, 75, 70)
+            Dim recCalibre As New Rectangle(anchoPapel - 100, y, 80, 75)
             e.Graphics.DrawRectangle(Pens.Black, recCalibre)
 
             Dim tamCalLabel = e.Graphics.MeasureString("CALIBRE", fCalibreLabel)
-            e.Graphics.DrawString("CALIBRE", fCalibreLabel, Brushes.Black, recCalibre.X + (75 - tamCalLabel.Width) / 2, recCalibre.Y + 4)
+            e.Graphics.DrawString("CALIBRE", fCalibreLabel, Brushes.Black, recCalibre.X + (80 - tamCalLabel.Width) / 2, recCalibre.Y + 4)
 
             Dim tamCalNum = e.Graphics.MeasureString(numCalibre, fCalibreNumero)
-            e.Graphics.DrawString(numCalibre, fCalibreNumero, Brushes.Black, recCalibre.X + (75 - tamCalNum.Width) / 2, recCalibre.Y + 16)
+            e.Graphics.DrawString(numCalibre, fCalibreNumero, Brushes.Black, recCalibre.X + (80 - tamCalNum.Width) / 2, recCalibre.Y + 18)
 
-            ' 3. TÍTULO CENTRADO
+            ' 3. TÍTULO EN EL MEDIO
             Dim titulo As String = "PALTAS EL CHEJO"
             Dim tamTitulo = e.Graphics.MeasureString(titulo, fTitulo)
             Dim xTitulo As Single = (anchoPapel - tamTitulo.Width) / 2
-            Dim yTitulo As Single = y + ((70 - tamTitulo.Height) / 2)
+            Dim yTitulo As Single = y + ((75 - tamTitulo.Height) / 2)
             e.Graphics.DrawString(titulo, fTitulo, Brushes.Black, xTitulo, yTitulo)
 
-            ' 4. LÍNEA SEPARADORA
-            y += 78
+            ' 4. LÍNEA SEPARADORA CABECERA (Saltos de 85 y 15)
+            y += 85
             e.Graphics.DrawLine(Pens.Black, x, y, anchoPapel - x, y)
-            y += 10
+            y += 15
 
             ' 5. LECTURA Y DIBUJO DE DATOS
             Dim bruto As Decimal = GetDec("bruto")
             Dim neto As Decimal = GetDec("neto")
             Dim tara As Decimal = GetDec("tara")
 
+            ' AÑADIDO: Campo "Proceso" está activo aquí
             Dim datos As New Dictionary(Of String, String) From {
             {"Código ID:", codigoBin},
             {"Recepción:", GetStr("recepcion")},
-            {"Tipo:", GetStr("tipo")},
             {"Proceso:", GetStr("proceso")},
+            {"Tipo:", GetStr("tipo")},
             {"Ciclo:", GetStr("ciclo")},
             {"Productor:", GetStr("productor")},
             {"Producto:", GetStr("producto")},
@@ -358,29 +355,30 @@ Public Class ucUbicacion
             {"Tara:", tara.ToString("#,##0.#") & " kg"}
         }
 
-            Dim posXValor As Integer = 130
+            ' Alineación en X = 140 y salto de Y = 26 (se cambió a 20)
+            Dim posXValor As Integer = 140
             For Each item In datos
                 e.Graphics.DrawString(item.Key, fDatosLabel, Brushes.Black, x, y)
                 e.Graphics.DrawString(item.Value, fDatosValor, Brushes.Black, posXValor, y)
-                y += 22 ' Ajustado para optimizar el alto vertical
+                y += 20
             Next
 
             ' 6. KILOS NETOS DESTACADOS
-            y += 4
+            y += 5
             e.Graphics.DrawLine(Pens.Gray, x, y, anchoPapel - x, y)
-            y += 6
+            y += 10
             e.Graphics.DrawString("Kilos Netos:", fDatosLabel, Brushes.Black, x, y)
             e.Graphics.DrawString(neto.ToString("#,##0.#") & " kg", fNetoValue, Brushes.Black, posXValor, y)
-            y += 26
+            y += 32
             e.Graphics.DrawLine(Pens.Gray, x, y, anchoPapel - x, y)
             y += 15
 
-            ' 7. CÓDIGO DE BARRAS INFERIOR (Altura reducida a 70px para garantizar ajuste)
+            ' 7. CÓDIGO DE BARRAS INFERIOR (100px de alto)
             Using bmpBarcode As Bitmap = GenerarImagenBarcode(codigoBin)
                 If bmpBarcode IsNot Nothing Then
                     Dim anchoBarcode As Integer = anchoPapel - (x * 2)
-                    e.Graphics.DrawImage(bmpBarcode, x, y, anchoBarcode, 70)
-                    y += 78
+                    e.Graphics.DrawImage(bmpBarcode, x, y, anchoBarcode, 100)
+                    y += 110
                 End If
             End Using
 
@@ -390,6 +388,7 @@ Public Class ucUbicacion
             e.Graphics.DrawString($"Fecha Reg: {fechaVal} {horaVal}", fTimestamp, Brushes.Black, x, y)
         End Using
     End Sub
+
 
 
     Private Function GenerarImagenBarcode(texto As String) As Bitmap
@@ -411,5 +410,7 @@ Public Class ucUbicacion
     Private Sub dgvResumen_DataError(sender As Object, e As DataGridViewDataErrorEventArgs) Handles dgvResumen.DataError
         e.ThrowException = False
     End Sub
+
+
 
 End Class

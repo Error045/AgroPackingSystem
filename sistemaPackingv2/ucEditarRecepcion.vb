@@ -29,13 +29,22 @@ Public Class ucEditarRecepcion
         cmbTipoRecepcion.ValueMember = "id"
         cmbTipoRecepcion.SelectedIndex = -1 ' Empieza vacío
 
+        cmbPersona.DropDownStyle = ComboBoxStyle.DropDownList
+
+        ' Define el límite visual a 15 elementos
+        cmbPersona.MaxDropDownItems = 10
+
+        ' Activa el ajuste de altura automático para evitar texto cortado
+        cmbPersona.IntegralHeight = False
 
 
         Dim frm = DirectCast(Application.OpenForms("Form1"), Form1)
 
         lblRecepcion.Text = _idRecepcion
 
-		cmbPersona.Text = frm.NombrePersonaGlobal
+        cmbPersona.Text = frm.NombrePersonaGlobal
+
+
 
 
     End Sub

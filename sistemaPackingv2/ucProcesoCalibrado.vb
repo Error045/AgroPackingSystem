@@ -236,7 +236,7 @@ Public Class ucProcesoCalibrado
                                          End Sub
                 pd.Print()
 
-                MessageBox.Show("Registro de calibración completado e impreso con éxito.", "Guardado", MessageBoxButtons.OK, MessageBoxIcon.Information)
+                'MessageBox.Show("Registro de calibración completado e impreso con éxito.", "Guardado", MessageBoxButtons.OK, MessageBoxIcon.Information)
                 cmbCalibre.SelectedIndex = -1
             Else
                 MessageBox.Show("El registro se guardó, pero no se encontró en la vista para imprimir.", "Aviso", MessageBoxButtons.OK, MessageBoxIcon.Warning)
