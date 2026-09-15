@@ -26,10 +26,10 @@ Partial Class ucPallet
         Me.cmbTipoContenedor = New System.Windows.Forms.ComboBox()
         Me.cmbProcesoPallet = New System.Windows.Forms.ComboBox()
         Me.Label2 = New System.Windows.Forms.Label()
-        Me.dgvBinesDisponibles = New System.Windows.Forms.DataGridView()
+        Me.dgvPalletsCreados = New System.Windows.Forms.DataGridView()
         Me.btnCrearPallet = New System.Windows.Forms.Button()
         Me.Label1 = New System.Windows.Forms.Label()
-        CType(Me.dgvBinesDisponibles, System.ComponentModel.ISupportInitialize).BeginInit()
+        CType(Me.dgvPalletsCreados, System.ComponentModel.ISupportInitialize).BeginInit()
         Me.SuspendLayout()
         '
         'lblPersona
@@ -72,15 +72,15 @@ Partial Class ucPallet
         Me.Label2.TabIndex = 8
         Me.Label2.Text = "N° PROCESO PALLET"
         '
-        'dgvBinesDisponibles
+        'dgvPalletsCreados
         '
-        Me.dgvBinesDisponibles.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize
-        Me.dgvBinesDisponibles.Location = New System.Drawing.Point(26, 351)
-        Me.dgvBinesDisponibles.Name = "dgvBinesDisponibles"
-        Me.dgvBinesDisponibles.RowHeadersWidth = 51
-        Me.dgvBinesDisponibles.RowTemplate.Height = 24
-        Me.dgvBinesDisponibles.Size = New System.Drawing.Size(799, 240)
-        Me.dgvBinesDisponibles.TabIndex = 19
+        Me.dgvPalletsCreados.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize
+        Me.dgvPalletsCreados.Location = New System.Drawing.Point(26, 351)
+        Me.dgvPalletsCreados.Name = "dgvPalletsCreados"
+        Me.dgvPalletsCreados.RowHeadersWidth = 51
+        Me.dgvPalletsCreados.RowTemplate.Height = 24
+        Me.dgvPalletsCreados.Size = New System.Drawing.Size(799, 240)
+        Me.dgvPalletsCreados.TabIndex = 19
         '
         'btnCrearPallet
         '
@@ -108,14 +108,14 @@ Partial Class ucPallet
         Me.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font
         Me.Controls.Add(Me.Label1)
         Me.Controls.Add(Me.btnCrearPallet)
-        Me.Controls.Add(Me.dgvBinesDisponibles)
+        Me.Controls.Add(Me.dgvPalletsCreados)
         Me.Controls.Add(Me.lblPersona)
         Me.Controls.Add(Me.cmbTipoContenedor)
         Me.Controls.Add(Me.cmbProcesoPallet)
         Me.Controls.Add(Me.Label2)
         Me.Name = "ucPallet"
         Me.Size = New System.Drawing.Size(856, 723)
-        CType(Me.dgvBinesDisponibles, System.ComponentModel.ISupportInitialize).EndInit()
+        CType(Me.dgvPalletsCreados, System.ComponentModel.ISupportInitialize).EndInit()
         Me.ResumeLayout(False)
         Me.PerformLayout()
 
@@ -124,7 +124,7 @@ Partial Class ucPallet
     Friend WithEvents cmbTipoContenedor As ComboBox
     Friend WithEvents cmbProcesoPallet As ComboBox
     Friend WithEvents Label2 As Label
-    Friend WithEvents dgvBinesDisponibles As DataGridView
+    Friend WithEvents dgvPalletsCreados As DataGridView
     Friend WithEvents btnCrearPallet As Button
     Friend WithEvents Label1 As Label
 End Class

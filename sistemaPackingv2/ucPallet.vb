@@ -4,6 +4,7 @@ Public Class ucPallet
 
     Private Sub ucPallet_Load(sender As Object, e As EventArgs) Handles MyBase.Load
         CargarCombos()
+        CargarDgvPalletsCreados()
     End Sub
 
     ' --- MÉTODO DE CARGA ---
@@ -52,6 +53,44 @@ Public Class ucPallet
             ConexionBD.Cerrar()
         End Try
     End Sub
+
+    Private Sub CargarDgvPalletsCreados()
+        Try
+            ' Se agregan ALIAS (AS 'Nombre') para que las columnas del DGV tengan nombres amigables
+            Dim sql As String = "SELECT a.id AS 'ID Pallet', " &
+                                "a.procesos_paletizado_id AS 'ID Proceso', " &
+                                "c.nombre AS 'Contenedor', " &
+                                "d.nombre AS 'Ubicación', " &
+                                "e.nombre AS 'Estado' " &
+                                "FROM pallets a " &
+                                "JOIN procesos_paletizado b ON (a.procesos_paletizado_id = b.id) " &
+                                "JOIN tipos_contenedores c ON (a.tipos_contenedores_id = c.id) " &
+                                "JOIN tipos_ubicaciones d ON (a.tipos_ubicaciones_id = d.id) " &
+                                "JOIN estados_contenedores e ON (a.estados_contenedores_id = e.id) " &
+                                "WHERE b.estados_procesos_pallets_id = 1;"
+
+            Dim dt As New DataTable()
+
+            Using cmd As New MySqlCommand(sql, ConexionBD.conexion)
+                Dim da As New MySqlDataAdapter(cmd)
+                ConexionBD.Abrir()
+                da.Fill(dt)
+            End Using
+
+            ' Asignar los datos al DataGridView
+            dgvPalletsCreados.DataSource = dt
+
+            ' Opcional: Ajustar visualmente las columnas para que ocupen todo el ancho
+            dgvPalletsCreados.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill
+
+        Catch ex As Exception
+            MessageBox.Show("Error al cargar la tabla de pallets: " & ex.Message, "Error de Conexión", MessageBoxButtons.OK, MessageBoxIcon.Error)
+        Finally
+            ConexionBD.Cerrar()
+        End Try
+    End Sub
+
+
 
     ' --- CREACIÓN DE PALLET Y SU HISTORIAL ---
     Private Sub btnCrearPallet_Click(sender As Object, e As EventArgs) Handles btnCrearPallet.Click

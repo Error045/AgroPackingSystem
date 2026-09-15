@@ -35,7 +35,7 @@ Partial Class ucPesajePallets
         Me.UcUbicacionPallets1.Font = New System.Drawing.Font("Microsoft Sans Serif", 9.0!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
         Me.UcUbicacionPallets1.Location = New System.Drawing.Point(0, 0)
         Me.UcUbicacionPallets1.Name = "UcUbicacionPallets1"
-        Me.UcUbicacionPallets1.Size = New System.Drawing.Size(1200, 900)
+        Me.UcUbicacionPallets1.Size = New System.Drawing.Size(1205, 900)
         Me.UcUbicacionPallets1.TabIndex = 2
         '
         'pnlContenedorPesaje
@@ -45,7 +45,7 @@ Partial Class ucPesajePallets
         Me.pnlContenedorPesaje.Dock = System.Windows.Forms.DockStyle.Fill
         Me.pnlContenedorPesaje.Location = New System.Drawing.Point(0, 0)
         Me.pnlContenedorPesaje.Name = "pnlContenedorPesaje"
-        Me.pnlContenedorPesaje.Size = New System.Drawing.Size(1200, 900)
+        Me.pnlContenedorPesaje.Size = New System.Drawing.Size(1205, 900)
         Me.pnlContenedorPesaje.TabIndex = 2
         '
         'UcValidacionPallet1
@@ -55,20 +55,20 @@ Partial Class ucPesajePallets
         Me.UcValidacionPallet1.Location = New System.Drawing.Point(0, 0)
         Me.UcValidacionPallet1.Margin = New System.Windows.Forms.Padding(4)
         Me.UcValidacionPallet1.Name = "UcValidacionPallet1"
-        Me.UcValidacionPallet1.Size = New System.Drawing.Size(1200, 900)
+        Me.UcValidacionPallet1.Size = New System.Drawing.Size(1205, 900)
         Me.UcValidacionPallet1.TabIndex = 3
         '
         'UcPesaje1
         '
         Me.UcPesaje1.DatosActuales = Nothing
         Me.UcPesaje1.IdContenedorSeleccionado = 0
-        Me.UcPesaje1.Location = New System.Drawing.Point(51, 156)
+        Me.UcPesaje1.Location = New System.Drawing.Point(0, 2)
         Me.UcPesaje1.Margin = New System.Windows.Forms.Padding(3, 2, 3, 2)
         Me.UcPesaje1.Name = "UcPesaje1"
         Me.UcPesaje1.Peso = "0,0"
         Me.UcPesaje1.PesoAcumuladoAnterior = 0R
         Me.UcPesaje1.PesoAcumuladoBinesAnteriores = 0R
-        Me.UcPesaje1.Size = New System.Drawing.Size(1118, 872)
+        Me.UcPesaje1.Size = New System.Drawing.Size(1169, 871)
         Me.UcPesaje1.TabIndex = 0
         Me.UcPesaje1.TaraSeleccionada = 0R
         Me.UcPesaje1.Titulo = "Contenedor #1"
@@ -80,7 +80,7 @@ Partial Class ucPesajePallets
         Me.Controls.Add(Me.pnlContenedorPesaje)
         Me.Controls.Add(Me.UcUbicacionPallets1)
         Me.Name = "ucPesajePallets"
-        Me.Size = New System.Drawing.Size(1200, 900)
+        Me.Size = New System.Drawing.Size(1205, 900)
         Me.pnlContenedorPesaje.ResumeLayout(False)
         Me.ResumeLayout(False)
 

@@ -344,8 +344,9 @@ Public Class ucUbicacion
             Dim datos As New Dictionary(Of String, String) From {
             {"Código ID:", codigoBin},
             {"Recepción:", GetStr("recepcion")},
-            {"Proceso:", GetStr("proceso")},
             {"Tipo:", GetStr("tipo")},
+            {"Proceso:", GetStr("proceso")},
+            {"Ubicación:", GetStr("ubicacion")},
             {"Ciclo:", GetStr("ciclo")},
             {"Productor:", GetStr("productor")},
             {"Producto:", GetStr("producto")},
@@ -360,7 +361,7 @@ Public Class ucUbicacion
             For Each item In datos
                 e.Graphics.DrawString(item.Key, fDatosLabel, Brushes.Black, x, y)
                 e.Graphics.DrawString(item.Value, fDatosValor, Brushes.Black, posXValor, y)
-                y += 20
+                y += 22
             Next
 
             ' 6. KILOS NETOS DESTACADOS
