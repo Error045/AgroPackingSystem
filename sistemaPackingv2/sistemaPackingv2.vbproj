@@ -15,7 +15,7 @@
     <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
     <Deterministic>true</Deterministic>
     <IsWebBootstrapper>false</IsWebBootstrapper>
-    <PublishUrl>D:\Proyectos_sistemas\02_Visual_basic\version Instalable\</PublishUrl>
+    <PublishUrl>D:\Proyectos_sistemas\02_Visual_basic\version Instalable2\</PublishUrl>
     <Install>true</Install>
     <InstallFrom>Disk</InstallFrom>
     <UpdateEnabled>false</UpdateEnabled>
@@ -25,7 +25,7 @@
     <UpdatePeriodically>false</UpdatePeriodically>
     <UpdateRequired>false</UpdateRequired>
     <MapFileExtensions>true</MapFileExtensions>
-    <ApplicationRevision>18</ApplicationRevision>
+    <ApplicationRevision>20</ApplicationRevision>
     <ApplicationVersion>1.0.0.%2a</ApplicationVersion>
     <UseApplicationTrust>false</UseApplicationTrust>
     <PublishWizardCompleted>true</PublishWizardCompleted>
@@ -414,6 +414,12 @@
     <Compile Include="ucSelector.vb">
       <SubType>UserControl</SubType>
     </Compile>
+    <Compile Include="ucServicio.Designer.vb">
+      <DependentUpon>ucServicio.vb</DependentUpon>
+    </Compile>
+    <Compile Include="ucServicio.vb">
+      <SubType>UserControl</SubType>
+    </Compile>
     <Compile Include="ucTarjado.Designer.vb">
       <DependentUpon>ucTarjado.vb</DependentUpon>
     </Compile>
@@ -598,6 +604,9 @@
     </EmbeddedResource>
     <EmbeddedResource Include="ucSelector.resx">
       <DependentUpon>ucSelector.vb</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="ucServicio.resx">
+      <DependentUpon>ucServicio.vb</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="ucTarjado.resx">
       <DependentUpon>ucTarjado.vb</DependentUpon>

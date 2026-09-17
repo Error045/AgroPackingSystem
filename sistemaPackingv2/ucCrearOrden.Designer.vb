@@ -54,7 +54,7 @@ Partial Class ucCrearOrden
         'dgvReporte
         '
         Me.dgvReporte.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize
-        Me.dgvReporte.Location = New System.Drawing.Point(40, 283)
+        Me.dgvReporte.Location = New System.Drawing.Point(40, 276)
         Me.dgvReporte.Name = "dgvReporte"
         Me.dgvReporte.RowHeadersWidth = 51
         Me.dgvReporte.RowTemplate.Height = 24

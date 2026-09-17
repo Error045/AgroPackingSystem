@@ -55,23 +55,23 @@ Public Class ucEditarRecepcion
         Try
             ConexionBD.Abrir()
 
-            ' 1. VALIDACIÓN: Comprobar si existen detalles asociados a esta recepción
+            ' 1. VALIDACIÓN: Comprobar si existen detalles asociados a esta recepción +++++++++++++++++++++++++borrar para depurar el código
             ' Usamos la variable _idRecepcion que ya tienes en la clase
-            Dim sqlValidacion As String = "SELECT COUNT(*) FROM recepciones_detalles WHERE recepciones_id = @id"
-            Dim conteoDetalles As Integer
+            ' Dim sqlValidacion As String = "SELECT COUNT(*) FROM recepciones_detalles WHERE recepciones_id = @id"
+            ' Dim conteoDetalles As Integer
 
 
-            Using cmdCheck As New MySqlCommand(sqlValidacion, ConexionBD.conexion)
-                cmdCheck.Parameters.AddWithValue("@id", _idRecepcion)
-                conteoDetalles = Convert.ToInt32(cmdCheck.ExecuteScalar())
-            End Using
+            '    Using cmdCheck As New MySqlCommand(sqlValidacion, ConexionBD.conexion)
+            '    cmdCheck.Parameters.AddWithValue("@id", _idRecepcion)
+            '   conteoDetalles = Convert.ToInt32(cmdCheck.ExecuteScalar())
+            '  End Using
 
             ' Si existen datos en detalles, bloqueamos la edición
-            If conteoDetalles > 0 Then
-                MessageBox.Show("No se puede modificar la recepción porque ya tiene detalles registrados.",
-                            "Acceso Denegado", MessageBoxButtons.OK, MessageBoxIcon.Stop)
-                Return
-            End If
+            ' If conteoDetalles > 0 Then
+            '   MessageBox.Show("No se puede modificar la recepción porque ya tiene detalles registrados.",
+            '                  "Acceso Denegado", MessageBoxButtons.OK, MessageBoxIcon.Stop)
+            '     Return
+            '  End If
 
             ' 2. Validación de Interfaz (Campos vacíos)
             If cmbPersona.SelectedValue Is Nothing OrElse cmbTipoRecepcion.SelectedValue Is Nothing Then

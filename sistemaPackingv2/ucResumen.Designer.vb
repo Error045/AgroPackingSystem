@@ -26,13 +26,6 @@ Partial Class ucResumen
         Dim DataGridViewCellStyle2 As System.Windows.Forms.DataGridViewCellStyle = New System.Windows.Forms.DataGridViewCellStyle()
         Dim DataGridViewCellStyle3 As System.Windows.Forms.DataGridViewCellStyle = New System.Windows.Forms.DataGridViewCellStyle()
         Me.dgvResumen = New System.Windows.Forms.DataGridView()
-        Me.btnConfirmar = New System.Windows.Forms.Button()
-        Me.btnCancelar = New System.Windows.Forms.Button()
-        Me.lblTotal = New System.Windows.Forms.Label()
-        Me.Label1 = New System.Windows.Forms.Label()
-        Me.Label2 = New System.Windows.Forms.Label()
-        Me.lblTipoRecepcion = New System.Windows.Forms.Label()
-        Me.lblNombre = New System.Windows.Forms.Label()
         Me.Título = New System.Windows.Forms.DataGridViewTextBoxColumn()
         Me.colProducto = New System.Windows.Forms.DataGridViewTextBoxColumn()
         Me.colVariedad = New System.Windows.Forms.DataGridViewTextBoxColumn()
@@ -47,6 +40,13 @@ Partial Class ucResumen
         Me.Variedad = New System.Windows.Forms.DataGridViewTextBoxColumn()
         Me.persona = New System.Windows.Forms.DataGridViewTextBoxColumn()
         Me.IdProducto = New System.Windows.Forms.DataGridViewTextBoxColumn()
+        Me.btnConfirmar = New System.Windows.Forms.Button()
+        Me.btnCancelar = New System.Windows.Forms.Button()
+        Me.lblTotal = New System.Windows.Forms.Label()
+        Me.Label1 = New System.Windows.Forms.Label()
+        Me.Label2 = New System.Windows.Forms.Label()
+        Me.lblTipoRecepcion = New System.Windows.Forms.Label()
+        Me.lblNombre = New System.Windows.Forms.Label()
         CType(Me.dgvResumen, System.ComponentModel.ISupportInitialize).BeginInit()
         Me.SuspendLayout()
         '
@@ -88,78 +88,6 @@ Partial Class ucResumen
         Me.dgvResumen.Size = New System.Drawing.Size(1374, 253)
         Me.dgvResumen.TabIndex = 0
         '
-        'btnConfirmar
-        '
-        Me.btnConfirmar.Font = New System.Drawing.Font("Microsoft Sans Serif", 13.8!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
-        Me.btnConfirmar.Location = New System.Drawing.Point(660, 583)
-        Me.btnConfirmar.Margin = New System.Windows.Forms.Padding(3, 2, 3, 2)
-        Me.btnConfirmar.Name = "btnConfirmar"
-        Me.btnConfirmar.Size = New System.Drawing.Size(167, 89)
-        Me.btnConfirmar.TabIndex = 1
-        Me.btnConfirmar.Text = "Confirmar"
-        Me.btnConfirmar.UseVisualStyleBackColor = True
-        '
-        'btnCancelar
-        '
-        Me.btnCancelar.Font = New System.Drawing.Font("Microsoft Sans Serif", 13.8!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
-        Me.btnCancelar.Location = New System.Drawing.Point(342, 583)
-        Me.btnCancelar.Margin = New System.Windows.Forms.Padding(3, 2, 3, 2)
-        Me.btnCancelar.Name = "btnCancelar"
-        Me.btnCancelar.Size = New System.Drawing.Size(167, 89)
-        Me.btnCancelar.TabIndex = 2
-        Me.btnCancelar.Text = "Cancelar"
-        Me.btnCancelar.UseVisualStyleBackColor = True
-        '
-        'lblTotal
-        '
-        Me.lblTotal.AutoSize = True
-        Me.lblTotal.Font = New System.Drawing.Font("Microsoft Sans Serif", 24.0!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
-        Me.lblTotal.Location = New System.Drawing.Point(83, 500)
-        Me.lblTotal.Name = "lblTotal"
-        Me.lblTotal.Size = New System.Drawing.Size(148, 46)
-        Me.lblTotal.TabIndex = 3
-        Me.lblTotal.Text = "TOTAL"
-        '
-        'Label1
-        '
-        Me.Label1.AutoSize = True
-        Me.Label1.Font = New System.Drawing.Font("Microsoft Sans Serif", 16.2!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
-        Me.Label1.Location = New System.Drawing.Point(94, 80)
-        Me.Label1.Name = "Label1"
-        Me.Label1.Size = New System.Drawing.Size(227, 32)
-        Me.Label1.TabIndex = 4
-        Me.Label1.Text = "Tipo  Recepción:"
-        '
-        'Label2
-        '
-        Me.Label2.AutoSize = True
-        Me.Label2.Font = New System.Drawing.Font("Microsoft Sans Serif", 16.2!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
-        Me.Label2.Location = New System.Drawing.Point(94, 127)
-        Me.Label2.Name = "Label2"
-        Me.Label2.Size = New System.Drawing.Size(122, 32)
-        Me.Label2.TabIndex = 5
-        Me.Label2.Text = "Nombre:"
-        '
-        'lblTipoRecepcion
-        '
-        Me.lblTipoRecepcion.AutoSize = True
-        Me.lblTipoRecepcion.Font = New System.Drawing.Font("Microsoft Sans Serif", 16.2!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
-        Me.lblTipoRecepcion.Location = New System.Drawing.Point(336, 80)
-        Me.lblTipoRecepcion.Name = "lblTipoRecepcion"
-        Me.lblTipoRecepcion.Size = New System.Drawing.Size(219, 32)
-        Me.lblTipoRecepcion.TabIndex = 8
-        Me.lblTipoRecepcion.Text = "Tipo  Recepción"
-        '
-        'lblNombre
-        '
-        Me.lblNombre.AutoSize = True
-        Me.lblNombre.Font = New System.Drawing.Font("Microsoft Sans Serif", 16.2!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
-        Me.lblNombre.Location = New System.Drawing.Point(336, 127)
-        Me.lblNombre.Name = "lblNombre"
-        Me.lblNombre.Size = New System.Drawing.Size(114, 32)
-        Me.lblNombre.TabIndex = 9
-        Me.lblNombre.Text = "Nombre"
-        '
         'Título
         '
         Me.Título.HeaderText = "Titulo"
@@ -188,7 +116,7 @@ Partial Class ucResumen
         Me.colIdCont.MinimumWidth = 6
         Me.colIdCont.Name = "colIdCont"
         Me.colIdCont.Visible = False
-        Me.colIdCont.Width = 192
+        Me.colIdCont.Width = 125
         '
         'colTara
         '
@@ -267,6 +195,78 @@ Partial Class ucResumen
         Me.IdProducto.Name = "IdProducto"
         Me.IdProducto.Visible = False
         Me.IdProducto.Width = 125
+        '
+        'btnConfirmar
+        '
+        Me.btnConfirmar.Font = New System.Drawing.Font("Microsoft Sans Serif", 13.8!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
+        Me.btnConfirmar.Location = New System.Drawing.Point(660, 583)
+        Me.btnConfirmar.Margin = New System.Windows.Forms.Padding(3, 2, 3, 2)
+        Me.btnConfirmar.Name = "btnConfirmar"
+        Me.btnConfirmar.Size = New System.Drawing.Size(167, 89)
+        Me.btnConfirmar.TabIndex = 1
+        Me.btnConfirmar.Text = "Confirmar"
+        Me.btnConfirmar.UseVisualStyleBackColor = True
+        '
+        'btnCancelar
+        '
+        Me.btnCancelar.Font = New System.Drawing.Font("Microsoft Sans Serif", 13.8!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
+        Me.btnCancelar.Location = New System.Drawing.Point(342, 583)
+        Me.btnCancelar.Margin = New System.Windows.Forms.Padding(3, 2, 3, 2)
+        Me.btnCancelar.Name = "btnCancelar"
+        Me.btnCancelar.Size = New System.Drawing.Size(167, 89)
+        Me.btnCancelar.TabIndex = 2
+        Me.btnCancelar.Text = "Cancelar"
+        Me.btnCancelar.UseVisualStyleBackColor = True
+        '
+        'lblTotal
+        '
+        Me.lblTotal.AutoSize = True
+        Me.lblTotal.Font = New System.Drawing.Font("Microsoft Sans Serif", 24.0!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
+        Me.lblTotal.Location = New System.Drawing.Point(83, 500)
+        Me.lblTotal.Name = "lblTotal"
+        Me.lblTotal.Size = New System.Drawing.Size(148, 46)
+        Me.lblTotal.TabIndex = 3
+        Me.lblTotal.Text = "TOTAL"
+        '
+        'Label1
+        '
+        Me.Label1.AutoSize = True
+        Me.Label1.Font = New System.Drawing.Font("Microsoft Sans Serif", 16.2!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
+        Me.Label1.Location = New System.Drawing.Point(94, 80)
+        Me.Label1.Name = "Label1"
+        Me.Label1.Size = New System.Drawing.Size(227, 32)
+        Me.Label1.TabIndex = 4
+        Me.Label1.Text = "Tipo  Recepción:"
+        '
+        'Label2
+        '
+        Me.Label2.AutoSize = True
+        Me.Label2.Font = New System.Drawing.Font("Microsoft Sans Serif", 16.2!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
+        Me.Label2.Location = New System.Drawing.Point(94, 127)
+        Me.Label2.Name = "Label2"
+        Me.Label2.Size = New System.Drawing.Size(122, 32)
+        Me.Label2.TabIndex = 5
+        Me.Label2.Text = "Nombre:"
+        '
+        'lblTipoRecepcion
+        '
+        Me.lblTipoRecepcion.AutoSize = True
+        Me.lblTipoRecepcion.Font = New System.Drawing.Font("Microsoft Sans Serif", 16.2!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
+        Me.lblTipoRecepcion.Location = New System.Drawing.Point(336, 80)
+        Me.lblTipoRecepcion.Name = "lblTipoRecepcion"
+        Me.lblTipoRecepcion.Size = New System.Drawing.Size(219, 32)
+        Me.lblTipoRecepcion.TabIndex = 8
+        Me.lblTipoRecepcion.Text = "Tipo  Recepción"
+        '
+        'lblNombre
+        '
+        Me.lblNombre.AutoSize = True
+        Me.lblNombre.Font = New System.Drawing.Font("Microsoft Sans Serif", 16.2!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
+        Me.lblNombre.Location = New System.Drawing.Point(336, 127)
+        Me.lblNombre.Name = "lblNombre"
+        Me.lblNombre.Size = New System.Drawing.Size(114, 32)
+        Me.lblNombre.TabIndex = 9
+        Me.lblNombre.Text = "Nombre"
         '
         'ucResumen
         '

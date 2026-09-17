@@ -65,9 +65,18 @@ Public Class ucResumen
             Dim sumaTotalBruto As Double = 0
 
             For Each p In lista
+                ' Extraer solo los dígitos numéricos del Titulo (ej: "Contenedor # 1" -> "1")
+                Dim soloNumero As String = System.Text.RegularExpressions.Regex.Match(p.Titulo, "\d+").Value
+
+                ' Si por alguna razón p.Titulo no contiene números, se conserva la cadena original como respaldo
+                Dim tituloMostrar As String = If(Not String.IsNullOrEmpty(soloNumero), soloNumero, p.Titulo)
+
+                ' Agregamos la fila enviando 'tituloMostrar' en lugar de 'p.Titulo'
+
                 ' Usamos los nombres de columna definidos en el diseñador
+
                 Dim rowIndex As Integer = dgvResumen.Rows.Add(
-                 p.Titulo,
+                 tituloMostrar,
                  nombreProducto,
                  nombreVariedad,
                  p.IdContenedor,
@@ -118,8 +127,9 @@ Public Class ucResumen
             Dim dtCalibres As DataTable = ObtenerDatos(sqlCalibres)
             Using cmd As New MySqlCommand(sqlCalibres, ConexionBD.conexion)
                 cmd.Parameters.AddWithValue("@idVar", idVar)
-                Dim da As New MySqlDataAdapter(cmd)
-                da.Fill(dtCalibres)
+                Using da As New MySqlDataAdapter(cmd)
+                    da.Fill(dtCalibres)
+                End Using
             End Using
 
             Dim colCal As DataGridViewComboBoxColumn = DirectCast(dgvResumen.Columns("colCalibre"), DataGridViewComboBoxColumn)
@@ -315,5 +325,45 @@ Public Class ucResumen
     Private Sub dgvResumen_DataError(sender As Object, e As DataGridViewDataErrorEventArgs) Handles dgvResumen.DataError
         '  Silenciamos el Error de validación visual del DataGridView
         e.ThrowException = False
+    End Sub
+
+    Private Sub dgvResumen_CellEnter(sender As Object, e As DataGridViewCellEventArgs) Handles dgvResumen.CellEnter
+        ' Verifica que la celda actual sea de tipo ComboBox
+        If TypeOf dgvResumen.Columns(e.ColumnIndex) Is DataGridViewComboBoxColumn AndAlso e.RowIndex >= 0 Then
+            ' Inicia la edición inmediatamente al entrar a la celda
+            dgvResumen.BeginEdit(True)
+        End If
+    End Sub
+
+    Private Sub dgvResumen_EditingControlShowing(sender As Object, e As DataGridViewEditingControlShowingEventArgs) Handles dgvResumen.EditingControlShowing
+        ' Capturamos el control ComboBox cuando entra en modo edición
+        Dim combo As ComboBox = TryCast(e.Control, ComboBox)
+
+        If combo IsNot Nothing Then
+            ' Removemos cualquier manejador previo para evitar múltiples llamadas acumuladas
+            RemoveHandler combo.SelectionChangeCommitted, AddressOf ComboBox_SelectionChangeCommitted
+            AddHandler combo.SelectionChangeCommitted, AddressOf ComboBox_SelectionChangeCommitted
+
+            ' Verificamos que la columna actual sea efectivamente un DataGridViewComboBoxColumn
+            Dim colActual = dgvResumen.Columns(dgvResumen.CurrentCell.ColumnIndex)
+
+            If TypeOf colActual Is DataGridViewComboBoxColumn Then
+                ' Usamos BeginInvoke para dar tiempo al control de asociar su DataSource correcto antes de desplegar
+                Me.BeginInvoke(Sub()
+                                   combo.DroppedDown = True
+                               End Sub)
+            End If
+        End If
+    End Sub
+
+    Private Sub ComboBox_SelectionChangeCommitted(sender As Object, e As EventArgs)
+        ' Confirma la selección del ComboBox inmediatamente al hacer clic en un ítem
+        dgvResumen.EndEdit()
+    End Sub
+
+    Private Sub ucResumen_Load(sender As Object, e As EventArgs) Handles MyBase.Load
+        ' Configura esto en el Load del Formulario o desde el diseñador
+        dgvResumen.EditMode = DataGridViewEditMode.EditOnEnter
+
     End Sub
 End Class
