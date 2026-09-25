@@ -1,11 +1,21 @@
-﻿Imports MySql.Data.MySqlClient
+﻿Imports System.Drawing.Printing
+Imports MySql.Data.MySqlClient
+Imports ZXing
 
 Public Class ucPallet
 
     Private Sub ucPallet_Load(sender As Object, e As EventArgs) Handles MyBase.Load
         CargarCombos()
         CargarDgvPalletsCreados()
+
+
+
     End Sub
+
+    ' Evento para el botón de resta
+
+
+
 
     ' --- MÉTODO DE CARGA ---
     Private Sub CargarCombos()
@@ -114,7 +124,7 @@ Public Class ucPallet
         Dim kNetos As Decimal = 0.0
         Dim kBrutos As Decimal = 0.0
         Dim cajasIniciales As Integer = 0
-        Dim capacidadDefecto As Integer = 45 ' Valor por defecto de tu BD (puedes volverlo dinámico luego)
+        Dim capacidadDefecto As Integer = Convert.ToInt32(numCantidadCajas.Text) ' Valor por defecto de tu BD (puedes volverlo dinámico luego)
         Dim idEstContenedor As Integer = 9   ' 9 = "Asignación de Cajas, en calibrado"
         Dim estadoProgreso As Integer = 1 ' 1 = Abierto
         Dim estadoInicial As Integer = 1 ' 1 = Activo
@@ -179,8 +189,31 @@ Public Class ucPallet
 
                     MessageBox.Show("Pallet N° " & idPalletCreado & " creado exitosamente en estado 'Abierto'.", "Éxito", MessageBoxButtons.OK, MessageBoxIcon.Information)
 
+                    ' --- RECUPERAR EL NOMBRE DEL CONTENEDOR SELECCIONADO EN EL COMBO ---
+                    Dim nombreContenedorStr As String = DirectCast(cmbTipoContenedor.SelectedItem, DataRowView)("nombre").ToString()
+
+                    ' --- DISPARAR IMPRESIÓN DIRECTA DEL TICKET 60x40 mm ---
+                    Dim printDoc As New Printing.PrintDocument()
+                    Dim fechaActualStr As String = DateTime.Now.ToString("dd/MM/yyyy HH:mm")
+
+                    ' Configurar el tamaño exacto del papel físico (6cm x 4cm = 236 x 157 centésimas de pulgada)
+                    printDoc.DefaultPageSettings.PaperSize = New Printing.PaperSize("Etiqueta 60x40", 236, 157)
+                    printDoc.DefaultPageSettings.Margins = New Printing.Margins(0, 0, 0, 0)
+
+                    ' Opcional: Si tienes una impresora térmica específica, descomenta la siguiente línea y pon su nombre
+                    ' printDoc.PrinterSettings.PrinterName = "Zebra TLP2844" 
+
+                    AddHandler printDoc.PrintPage, Sub(s, ev)
+                                                       ImprimirTicketPallet60x40(ev, idPalletCreado, idProceso, nombreContenedorStr, fechaActualStr)
+                                                   End Sub
+
+                    ' IMPRIMIR DIRECTAMENTE (sin vista previa)
+                    printDoc.Print()
+
                     ' Limpiar interfaz
                     cmbTipoContenedor.SelectedIndex = -1
+                    CargarDgvPalletsCreados()
+
 
                 Catch ex As Exception
                     transaccion.Rollback()
@@ -193,6 +226,91 @@ Public Class ucPallet
         Finally
             ConexionBD.Cerrar()
         End Try
+    End Sub
+
+    Private Function GenerarImagenBarcode(texto As String) As Bitmap
+        Try
+            Dim escritor As New BarcodeWriter With {
+                .Format = BarcodeFormat.CODE_128
+            }
+            escritor.Options = New Common.EncodingOptions With {
+                .Width = 350,
+                .Height = 100,
+                .Margin = 0 ' <--- CAMBIAR ESTO DE 2 a 0
+            }
+            Return escritor.Write(texto)
+        Catch ex As Exception
+            Return Nothing
+        End Try
+    End Function
+
+    Private Sub ImprimirTicketPallet60x40(e As PrintPageEventArgs, idPallet As Integer, idProceso As Integer, nombreContenedor As String, fechaReg As String)
+        ' En PrintDocument, 1 unidad = 1/100 de pulgada.
+        ' 6 cm (60 mm) = 236 unidades
+        ' 4 cm (40 mm) = 157 unidades
+        Dim anchoTicket As Integer = 236
+        Dim altoTicket As Integer = 157
+
+        Dim x As Integer = 2 ' Margen mínimo
+        Dim y As Integer = 2
+
+        Using fTituloEmpresa As New Font("Arial", 8, FontStyle.Bold),
+              fTitulo As New Font("Arial", 9, FontStyle.Bold),
+              fTexto As New Font("Arial", 7),
+              fFecha As New Font("Arial", 6, FontStyle.Italic)
+
+            ' --- A. LOGOTIPO O TEXTO EMPRESA ---
+            Dim imagenCargada As Boolean = False
+            Try
+                Dim imgLogo As Image = My.Resources.logo
+                If imgLogo IsNot Nothing Then
+                    Dim anchoImg As Integer = 90 ' Tamaño de imagen ajustado para el ticket real
+                    Dim altoImg As Integer = 30
+                    Dim xImg As Single = (anchoTicket - anchoImg) / 2 ' Centrado horizontal
+                    e.Graphics.DrawImage(imgLogo, xImg, y, anchoImg, altoImg)
+                    imagenCargada = True
+                End If
+            Catch
+                imagenCargada = False
+            End Try
+
+            If Not imagenCargada Then
+                Dim textoEmpresa As String = "PALTAS EL CHEJO"
+                Dim tamEmpresa = e.Graphics.MeasureString(textoEmpresa, fTituloEmpresa)
+                Dim xEmpresa As Single = (anchoTicket - tamEmpresa.Width) / 2
+                e.Graphics.DrawString(textoEmpresa, fTituloEmpresa, Brushes.Black, xEmpresa, y + 5)
+            End If
+
+            y += 32
+
+            ' Línea separadora
+            e.Graphics.DrawLine(Pens.Black, 10, y, anchoTicket - 10, y)
+            y += 4
+
+            ' --- B. INFORMACIÓN DEL PALLET ---
+            ' Centrar el título de PALLET N°
+            Dim txtPallet As String = $"PALLET N°: {idPallet}"
+            Dim tamPallet = e.Graphics.MeasureString(txtPallet, fTitulo)
+            e.Graphics.DrawString(txtPallet, fTitulo, Brushes.Black, (anchoTicket - tamPallet.Width) / 2, y)
+            y += 15
+
+            ' Resto de los datos a la izquierda
+            e.Graphics.DrawString($"Proc: {idProceso} | Cont: {nombreContenedor}", fTexto, Brushes.Black, x + 5, y)
+            y += 12
+
+            e.Graphics.DrawString($"Fecha: {fechaReg}", fFecha, Brushes.Black, x + 5, y)
+            y += 12
+
+            ' --- C. CÓDIGO DE BARRAS INFERIOR ---
+            Using bmpBarcode As Bitmap = GenerarImagenBarcode(idPallet.ToString())
+                If bmpBarcode IsNot Nothing Then
+                    Dim anchoBar As Integer = 190
+                    Dim altoBar As Integer = 45
+                    Dim xBar As Single = (anchoTicket - anchoBar) / 2
+                    e.Graphics.DrawImage(bmpBarcode, xBar, y, anchoBar, altoBar)
+                End If
+            End Using
+        End Using
     End Sub
 
 

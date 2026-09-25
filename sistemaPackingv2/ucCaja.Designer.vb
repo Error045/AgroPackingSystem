@@ -41,18 +41,24 @@ Partial Class ucCaja
         '
         'cmbPallet
         '
+        Me.cmbPallet.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList
         Me.cmbPallet.Font = New System.Drawing.Font("Microsoft Sans Serif", 13.8!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
         Me.cmbPallet.FormattingEnabled = True
+        Me.cmbPallet.IntegralHeight = False
         Me.cmbPallet.Location = New System.Drawing.Point(224, 70)
+        Me.cmbPallet.MaxDropDownItems = 10
         Me.cmbPallet.Name = "cmbPallet"
         Me.cmbPallet.Size = New System.Drawing.Size(264, 37)
         Me.cmbPallet.TabIndex = 0
         '
         'cmbTipoContenedor
         '
+        Me.cmbTipoContenedor.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList
         Me.cmbTipoContenedor.Font = New System.Drawing.Font("Microsoft Sans Serif", 13.8!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
         Me.cmbTipoContenedor.FormattingEnabled = True
+        Me.cmbTipoContenedor.IntegralHeight = False
         Me.cmbTipoContenedor.Location = New System.Drawing.Point(224, 158)
+        Me.cmbTipoContenedor.MaxDropDownItems = 10
         Me.cmbTipoContenedor.Name = "cmbTipoContenedor"
         Me.cmbTipoContenedor.Size = New System.Drawing.Size(264, 37)
         Me.cmbTipoContenedor.TabIndex = 1
@@ -79,9 +85,12 @@ Partial Class ucCaja
         '
         'cmbProducto
         '
+        Me.cmbProducto.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList
         Me.cmbProducto.Font = New System.Drawing.Font("Microsoft Sans Serif", 13.8!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
         Me.cmbProducto.FormattingEnabled = True
+        Me.cmbProducto.IntegralHeight = False
         Me.cmbProducto.Location = New System.Drawing.Point(224, 252)
+        Me.cmbProducto.MaxDropDownItems = 10
         Me.cmbProducto.Name = "cmbProducto"
         Me.cmbProducto.Size = New System.Drawing.Size(264, 37)
         Me.cmbProducto.TabIndex = 4
@@ -108,18 +117,24 @@ Partial Class ucCaja
         '
         'cmbVariedad
         '
+        Me.cmbVariedad.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList
         Me.cmbVariedad.Font = New System.Drawing.Font("Microsoft Sans Serif", 13.8!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
         Me.cmbVariedad.FormattingEnabled = True
+        Me.cmbVariedad.IntegralHeight = False
         Me.cmbVariedad.Location = New System.Drawing.Point(224, 333)
+        Me.cmbVariedad.MaxDropDownItems = 10
         Me.cmbVariedad.Name = "cmbVariedad"
         Me.cmbVariedad.Size = New System.Drawing.Size(264, 37)
         Me.cmbVariedad.TabIndex = 7
         '
         'cmbCalibre
         '
+        Me.cmbCalibre.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList
         Me.cmbCalibre.Font = New System.Drawing.Font("Microsoft Sans Serif", 13.8!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
         Me.cmbCalibre.FormattingEnabled = True
+        Me.cmbCalibre.IntegralHeight = False
         Me.cmbCalibre.Location = New System.Drawing.Point(224, 416)
+        Me.cmbCalibre.MaxDropDownItems = 10
         Me.cmbCalibre.Name = "cmbCalibre"
         Me.cmbCalibre.Size = New System.Drawing.Size(264, 37)
         Me.cmbCalibre.TabIndex = 8

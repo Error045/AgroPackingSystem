@@ -10,15 +10,20 @@ Public Class ucOrdenRepesajeActualizar
     Public Event SolicitarGuardadoFinal(datosFinales As List(Of Dictionary(Of String, String)))
     Public Event ProcesoCancelado()
 
-    ' 🟢 1. RECIBIR DATOS Y ARMAR LA TABLA DE REVISIÓN
+    ' Variable para guardar la ubicación dinámicamente
+    Private UbicacionDestinoId As Integer
+
+    ' Recibimos la lista Y el ID de la ubicación
     Public Sub RecibirDatosParaRevision(lote As List(Of Dictionary(Of String, String)))
         LotePesadoParaRevision = lote
         ArmarTablaComparativaDesdeBD()
     End Sub
-
     Private Sub ArmarTablaComparativaDesdeBD()
         dgvResumen.DataSource = Nothing
         dgvResumen.Columns.Clear()
+
+        ' 1. Validar que tengamos datos
+        If LotePesadoParaRevision Is Nothing OrElse LotePesadoParaRevision.Count = 0 Then Return
 
         Dim dt As New DataTable()
         dt.Columns.Add("id", GetType(Integer))
@@ -33,52 +38,67 @@ Public Class ucOrdenRepesajeActualizar
         dt.Columns.Add("estado", GetType(String))
         dt.Columns.Add("tipos_contenedores_id", GetType(Integer))
 
+        ' 2. Crear una lista de IDs separada por comas y un diccionario para búsqueda rápida
+        Dim idsList As New List(Of String)
+        Dim dictLote As New Dictionary(Of Integer, Dictionary(Of String, String))
+
+        For Each item In LotePesadoParaRevision
+            Dim idBin As Integer = Convert.ToInt32(item("ID_BIN"))
+            ' Agregamos el ID a la lista asegurando que sea un número (previene inyección SQL)
+            idsList.Add(idBin.ToString())
+            ' Guardamos la referencia del item usando el ID como llave
+            dictLote(idBin) = item
+        Next
+
+        Dim inClause As String = String.Join(",", idsList)
+
         Try
             ConexionBD.Abrir()
 
-            For Each item In LotePesadoParaRevision
-                Dim idBin As Integer = Convert.ToInt32(item("ID_BIN"))
-                Dim pesoNuevoBruto As Decimal = Convert.ToDecimal(item("Bruto"))
-                Dim nuevaTara As Decimal = Convert.ToDecimal(item("Tara"))
+            ' 3. Una ÚNICA consulta a la base de datos usando IN
+            ' Agregamos b.id a la consulta para saber a qué bin pertenece cada fila
+            Dim sql As String = "SELECT b.id AS idBinBD, b.recepciones_id, p.nombre AS producto, v.nombre AS variedad, " &
+                            "c.nombre AS calibre, b.kilos_brutos, b.tipos_contenedores_id " &
+                            "FROM contenedores b " &
+                            "LEFT JOIN productos p ON b.productos_id = p.id " &
+                            "LEFT JOIN variedades v ON b.variedades_id = v.id " &
+                            "LEFT JOIN calibres c ON b.calibres_id = c.id " &
+                            "WHERE b.id IN (" & inClause & ")"
 
-                ' 🟢 Consultamos a la base de datos fresca usando el ID del bin
-                Dim sql As String = "SELECT b.recepciones_id, p.nombre AS producto, v.nombre AS variedad, " &
-                                "c.nombre AS calibre, b.kilos_brutos, b.tipos_contenedores_id " &
-                                "FROM contenedores b " &
-                                "LEFT JOIN productos p ON b.productos_id = p.id " &
-                                "LEFT JOIN variedades v ON b.variedades_id = v.id " &
-                                "LEFT JOIN calibres c ON b.calibres_id = c.id " &
-                                "WHERE b.id = @idBin"
+            Using cmd As New MySqlCommand(sql, ConexionBD.conexion)
+                Using reader As MySqlDataReader = cmd.ExecuteReader()
+                    ' 4. Recorrer los resultados (1 solo viaje a la BD)
+                    While reader.Read()
+                        Dim idBinBD As Integer = Convert.ToInt32(reader("idBinBD"))
+                        Dim pesoOrigenBruto As Decimal = Convert.ToDecimal(reader("kilos_brutos"))
 
-                Using cmd As New MySqlCommand(sql, ConexionBD.conexion)
-                    cmd.Parameters.AddWithValue("@idBin", idBin)
-                    Using reader As MySqlDataReader = cmd.ExecuteReader()
-                        If reader.Read() Then
-                            Dim pesoOrigenBruto As Decimal = Convert.ToDecimal(reader("kilos_brutos"))
-                            Dim diferencia As Decimal = pesoOrigenBruto - pesoNuevoBruto
+                        ' Recuperamos los datos que trajimos de la sesión usando el Diccionario
+                        Dim item = dictLote(idBinBD)
+                        Dim pesoNuevoBruto As Decimal = Convert.ToDecimal(item("Bruto"))
+                        Dim nuevaTara As Decimal = Convert.ToDecimal(item("Tara"))
+                        Dim diferencia As Decimal = pesoOrigenBruto - pesoNuevoBruto
 
-                            ' Guardamos la diferencia en el diccionario para cuando se pulse "Guardar"
-                            item("Diferencia") = diferencia.ToString()
-                            item("ID_ORIGINAL_CONTENEDOR") = reader("tipos_contenedores_id").ToString()
+                        ' Guardamos la diferencia y el contenedor original
+                        item("Diferencia") = diferencia.ToString()
+                        item("ID_ORIGINAL_CONTENEDOR") = reader("tipos_contenedores_id").ToString()
 
-                            ' Agregamos los 11 valores exactos a la grilla
-                            dt.Rows.Add(
-                            idBin,
-                            reader("recepciones_id").ToString(),
-                            reader("producto").ToString(),
-                            reader("variedad").ToString(),
-                            reader("calibre").ToString(),
-                            nuevaTara,
-                            pesoOrigenBruto,
-                            pesoNuevoBruto,
-                            diferencia,
-                            "PESADO",
-                            Convert.ToInt32(reader("tipos_contenedores_id"))
-                        )
-                        End If
-                    End Using
+                        ' Agregamos la fila a la DataTable
+                        dt.Rows.Add(
+                        idBinBD,
+                        reader("recepciones_id").ToString(),
+                        reader("producto").ToString(),
+                        reader("variedad").ToString(),
+                        reader("calibre").ToString(),
+                        nuevaTara,
+                        pesoOrigenBruto,
+                        pesoNuevoBruto,
+                        diferencia,
+                        "PESADO",
+                        Convert.ToInt32(reader("tipos_contenedores_id"))
+                    )
+                    End While
                 End Using
-            Next
+            End Using
         Catch ex As Exception
             MessageBox.Show("Error al cargar datos del bin: " & ex.Message, "Error BD", MessageBoxButtons.OK, MessageBoxIcon.Error)
         Finally
@@ -163,11 +183,12 @@ Public Class ucOrdenRepesajeActualizar
                         ' Cálculo dinámico del Neto
                         Dim kilosNuevosNeto As Decimal = kilosNuevosBruto - taraEnvase
 
-                        ' A. UPDATE contenedores: Designamos la ubicación a 'patio proceso' (2) y estado 'En Proceso' (2)
-                        Dim sqlUpdContenedor As String = "UPDATE contenedores SET tipos_ubicaciones_id = 2, estados_contenedores_id = 2, kilos_brutos = @bruto, kilos_netos = @neto, updated_at= NOW() WHERE id = @idBin"
+                        ' A. UPDATE contenedores: Asignamos la ubicación dinámica
+                        Dim sqlUpdContenedor As String = "UPDATE contenedores SET tipos_ubicaciones_id = @ubicacion, estados_contenedores_id = 2, kilos_brutos = @bruto, kilos_netos = @neto, updated_at= NOW() WHERE id = @idBin"
                         Using cmd As New MySqlCommand(sqlUpdContenedor, ConexionBD.conexion, trx)
                             cmd.Parameters.AddWithValue("@bruto", kilosNuevosBruto)
                             cmd.Parameters.AddWithValue("@neto", kilosNuevosNeto)
+                            cmd.Parameters.AddWithValue("@ubicacion", UbicacionDestinoId) '<-- Ubicación dinámica
                             cmd.Parameters.AddWithValue("@idBin", idBin)
                             cmd.ExecuteNonQuery()
                         End Using
@@ -193,11 +214,12 @@ Public Class ucOrdenRepesajeActualizar
                             End Using
                         End If
 
-                        ' D. INSERT contenedores_historial (Traslado: tipos_movimientos_id = 2, estados_contenedores_id = 2, ubicacion = 2)
-                        Dim sqlHistTraslado As String = "INSERT INTO contenedores_historial (tipos_movimientos_id, tipos_contenedores_id, contenedores_id, tipos_ubicaciones_id, kilos_brutos, kilos_netos, estados_contenedores_id, fecha_movimiento, users_id) VALUES (2, @tipoContenedor, @idBin, 2, @bruto, @neto, 2, NOW(), 1)"
+                        ' D. INSERT contenedores_historial (Traslado): Asignamos la ubicación dinámica
+                        Dim sqlHistTraslado As String = "INSERT INTO contenedores_historial (tipos_movimientos_id, tipos_contenedores_id, contenedores_id, tipos_ubicaciones_id, kilos_brutos, kilos_netos, estados_contenedores_id, fecha_movimiento, users_id) VALUES (2, @tipoContenedor, @idBin, @ubicacion, @bruto, @neto, 2, NOW(), 1)"
                         Using cmd As New MySqlCommand(sqlHistTraslado, ConexionBD.conexion, trx)
                             cmd.Parameters.AddWithValue("@tipoContenedor", tipoContenedorId)
                             cmd.Parameters.AddWithValue("@idBin", idBin)
+                            cmd.Parameters.AddWithValue("@ubicacion", UbicacionDestinoId) '<-- Ubicación dinámica
                             cmd.Parameters.AddWithValue("@bruto", kilosNuevosBruto)
                             cmd.Parameters.AddWithValue("@neto", kilosNuevosNeto)
                             cmd.ExecuteNonQuery()
@@ -228,6 +250,8 @@ Public Class ucOrdenRepesajeActualizar
             ConexionBD.Cerrar()
         End Try
     End Sub
+
+
 
     Private Sub btnCancelar_Click(sender As Object, e As EventArgs) Handles btnCancelar.Click
         RaiseEvent ProcesoCancelado()

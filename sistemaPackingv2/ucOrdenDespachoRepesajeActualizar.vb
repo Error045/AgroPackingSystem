@@ -8,12 +8,16 @@ Public Class ucOrdenDespachoRepesajeActualizar
         Public Event SolicitarGuardadoFinal(datosFinales As List(Of Dictionary(Of String, String)))
         Public Event ProcesoCancelado()
 
-        Public Sub RecibirDatosParaRevision(lote As List(Of Dictionary(Of String, String)))
-            LotePesadoParaRevision = lote
-            ArmarTablaComparativaDesdeBD()
-        End Sub
 
-        Private Sub ArmarTablaComparativaDesdeBD()
+    Public Sub RecibirDatosParaRevision(lote As List(Of Dictionary(Of String, String)))
+        LotePesadoParaRevision = lote
+        ArmarTablaComparativaDesdeBD()
+    End Sub
+
+    ' Declaramos el evento que enviará los datos aprobados
+    Public Event DatosAprobados(loteAprobado As List(Of Dictionary(Of String, String)))
+
+    Private Sub ArmarTablaComparativaDesdeBD()
             dgvResumen.DataSource = Nothing
             dgvResumen.Columns.Clear()
 
@@ -132,15 +136,16 @@ Public Class ucOrdenDespachoRepesajeActualizar
         End Sub
 
         Private Sub btnConfirmarYGuardar_Click(sender As Object, e As EventArgs) Handles btnConfirmarYGuardar.Click
-            If dgvResumen.Rows.Count = 0 Then Return
 
-            Dim result As DialogResult = MessageBox.Show("¿Está seguro de guardar los nuevos pesos y registrar los historiales de los pallets?",
-                                                         "Confirmación Final", MessageBoxButtons.YesNo, MessageBoxIcon.Question)
+        If dgvResumen.Rows.Count = 0 Then Return
 
-            If result = DialogResult.Yes Then
-                GuardarRepesajeEnB()
-            End If
-        End Sub
+        Dim result As DialogResult = MessageBox.Show("¿Está seguro de guardar los nuevos pesos y registrar los historiales de los pallets?", "Confirmación Final", MessageBoxButtons.YesNo, MessageBoxIcon.Question)
+
+        If result = DialogResult.Yes Then
+            GuardarRepesajeEnB()
+            RaiseEvent DatosAprobados(LotePesadoParaRevision)
+        End If
+    End Sub
 
         Private Sub GuardarRepesajeEnB()
             Try
@@ -164,23 +169,23 @@ Public Class ucOrdenDespachoRepesajeActualizar
                             Dim estadosProgId = Convert.ToInt32(fila.Cells("estados_progresos_pallets_id").Value)
                             Dim userId As Integer = 1 ' Puedes enlazarlo a tu variable global de sesión de usuario
 
-                            ' A. UPDATE pallets
-                            Dim sqlUpdPallet As String = "UPDATE pallets SET kilos_brutos = @bruto, kilos_netos = @neto WHERE id = @idPallet"
-                            Using cmd As New MySqlCommand(sqlUpdPallet, ConexionBD.conexion, trx)
+                        ' A. UPDATE pallets
+                        Dim sqlUpdPallet As String = "UPDATE pallets SET kilos_brutos = @bruto, kilos_netos = @neto, updated_at = NOW() WHERE id = @idPallet"
+                        Using cmd As New MySqlCommand(sqlUpdPallet, ConexionBD.conexion, trx)
                                 cmd.Parameters.AddWithValue("@bruto", kilosNuevosBruto)
                                 cmd.Parameters.AddWithValue("@neto", kilosNuevosNeto)
                                 cmd.Parameters.AddWithValue("@idPallet", idPallet)
                                 cmd.ExecuteNonQuery()
                             End Using
 
-                            ' B. INSERT pallets_historial (Repesaje: tipos_movimientos_id = 7)
-                            Dim sqlHistRepesaje As String =
+                        ' B. INSERT pallets_historial (Repesaje: tipos_movimientos_id = 7)
+                        Dim sqlHistRepesaje As String =
                                 "INSERT INTO pallets_historial (tipos_movimientos_id, procesos_paletizado_id, pallets_id, " &
                                 "tipos_contenedores_id, tipos_ubicaciones_id, kilos_netos, kilos_brutos, numero_cajas, " &
-                                "capacidad, estados_contenedores_id, estados_progresos_pallets_id, users_id, estado, fecha_movimiento) " &
-                                "VALUES (7, @procId, @idPallet, @tipoContId, @ubicacion, @neto, @bruto, @cajas, @capacidad, @estadoCont, @estadoProg, @userId, 1, NOW())"
+                                "capacidad, estados_contenedores_id, estados_progresos_pallets_id, users_id, estado, fecha_movimiento,created_at,updated_at) " &
+                                "VALUES (7, @procId, @idPallet, @tipoContId, 4, @neto, @bruto, @cajas, @capacidad, 16, @estadoProg, @userId, 1, NOW(),NOW(),NOW())"
 
-                            Using cmd As New MySqlCommand(sqlHistRepesaje, ConexionBD.conexion, trx)
+                        Using cmd As New MySqlCommand(sqlHistRepesaje, ConexionBD.conexion, trx)
                                 cmd.Parameters.AddWithValue("@procId", procesosPaletizadoId)
                                 cmd.Parameters.AddWithValue("@idPallet", idPallet)
                                 cmd.Parameters.AddWithValue("@tipoContId", tipoContenedorId)
@@ -197,12 +202,12 @@ Public Class ucOrdenDespachoRepesajeActualizar
 
                             ' C. INSERT Merma en pallets_historial (Opcional, similar al anterior con mov=8)
                             If diferencia > 0 Then
-                                Dim sqlMerma As String =
+                            Dim sqlMerma As String =
                                     "INSERT INTO pallets_historial (tipos_movimientos_id, procesos_paletizado_id, pallets_id, " &
                                     "tipos_contenedores_id, tipos_ubicaciones_id, kilos_netos, kilos_brutos, numero_cajas, " &
-                                    "capacidad, estados_contenedores_id, estados_progresos_pallets_id, users_id, estado, fecha_movimiento) " &
-                                    "VALUES (8, @procId, @idPallet, @tipoContId, @ubicacion, @dif, @dif, @cajas, @capacidad, @estadoCont, @estadoProg, @userId, 1, NOW())"
-                                Using cmd As New MySqlCommand(sqlMerma, ConexionBD.conexion, trx)
+                                    "capacidad, estados_contenedores_id, estados_progresos_pallets_id, users_id, estado, fecha_movimiento,created_at,updated_at) " &
+                                    "VALUES (8, @procId, @idPallet, @tipoContId, 4, @dif, @dif, @cajas, @capacidad, 16 , @estadoProg, @userId, 1, NOW(), NOW(), NOW())"
+                            Using cmd As New MySqlCommand(sqlMerma, ConexionBD.conexion, trx)
                                     ' Mismos parámetros, pero Kilos Brutos y Netos llevan el valor de "diferencia"
                                     cmd.Parameters.AddWithValue("@procId", procesosPaletizadoId)
                                     cmd.Parameters.AddWithValue("@idPallet", idPallet)

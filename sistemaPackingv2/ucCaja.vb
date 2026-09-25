@@ -1,5 +1,7 @@
-﻿Imports MySql.Data.MySqlClient
-
+﻿Imports System.Drawing.Printing
+Imports MySql.Data.MySqlClient
+Imports ZXing
+Imports ZXing.Common
 Public Class ucCaja
 
     ' --- CARGA INICIAL CONTROLADA ---
@@ -398,6 +400,9 @@ Public Class ucCaja
                     ' Si agregas el numero_caja, ponlo de primero: nuevoConteo, 
                     dgvCajas.Rows.Insert(0, nuevoConteo, idNuevaCaja, cmbProducto.Text, cmbVariedad.Text, cmbCalibre.Text)
 
+                    '  Mandar a imprimir el ticket automáticamente al crear
+                    'ImprimirTicketCaja(nuevoConteo.ToString(), cmbPallet.Text, cmbProducto.Text, cmbVariedad.Text, cmbCalibre.Text)  DESACTIVADO TEMPORALMENTE PARA HASTA QUE SE DEFINA EL FLUJO DE IMPRESIÓN PARA CAJAS.
+
                     ' ActualizarLabelCapacidad(idPallet) ahora lo hace sin llamar bd
                     ' --- 2. Actualizar el label manualmente sin consultar la BD ---
                     lblCapacidad.Text = String.Format("Cajas: {0} / {1}", nuevoConteo, maximo)
@@ -435,13 +440,122 @@ Public Class ucCaja
         If e.RowIndex >= 0 AndAlso dgvCajas.Columns(e.ColumnIndex).Name = "Reimprimir" Then
             ' Obtenemos el ID de la caja de esa fila
             Dim idCajaImprimir As Integer = Convert.ToInt32(dgvCajas.Rows(e.RowIndex).Cells("codigo").Value)
+            ' Extraer datos de la fila seleccionada
+            Dim numCaja As String = dgvCajas.Rows(e.RowIndex).Cells("numero_caja").Value.ToString()
+            Dim producto As String = dgvCajas.Rows(e.RowIndex).Cells("Producto").Value.ToString()
+            Dim variedad As String = dgvCajas.Rows(e.RowIndex).Cells("Variedad").Value.ToString()
+            Dim calibre As String = dgvCajas.Rows(e.RowIndex).Cells("Calibre").Value.ToString()
 
-            ' Aquí llamas a tu módulo o función de impresión, pasándole el ID
-            ' Ejemplo:
-            ' ModuloImpresion.ImprimirEtiquetaCaja(idCajaImprimir)
+            ' El pallet lo sacamos del ComboBox seleccionado actualmente
+            Dim pallet As String = cmbPallet.Text
+
+            ' Llamamos a imprimir
+            ImprimirTicketCaja(numCaja, pallet, producto, variedad, calibre)
 
             MessageBox.Show("Enviando impresión de etiqueta para la Caja Código: " & idCajaImprimir, "Imprimir", MessageBoxButtons.OK, MessageBoxIcon.Information)
         End If
     End Sub
+
+
+    ' --- VARIABLES PARA PASAR DATOS AL EVENTO DE IMPRESIÓN ---
+    Private cajaPrintNum As String
+    Private cajaPrintPallet As String
+    Private cajaPrintProd As String
+    Private cajaPrintVar As String
+    Private cajaPrintCalibre As String
+
+    ' --- MÉTODO PARA INICIAR LA IMPRESIÓN ---
+    Private Sub ImprimirTicketCaja(numCaja As String, pallet As String, producto As String, variedad As String, calibre As String)
+        ' Asignar a variables globales para que PrintPage las lea
+        cajaPrintNum = numCaja
+        cajaPrintPallet = pallet
+        cajaPrintProd = producto
+        cajaPrintVar = variedad
+        cajaPrintCalibre = calibre
+
+        Dim pd As New PrintDocument()
+        ' Configurar tamaño: 80 mm x 40 mm (315 x 157 centésimas de pulgada)
+        pd.DefaultPageSettings.PaperSize = New PaperSize("EtiquetaCaja", 315, 157)
+        ' pd.PrinterSettings.PrinterName = "NombreDeTuImpresoraZebra" ' Opcional si quieres fijar la impresora
+
+        AddHandler pd.PrintPage, AddressOf pd_PrintPageCaja
+
+        Try
+            pd.Print()
+        Catch ex As Exception
+            MessageBox.Show("Error al imprimir el ticket de caja: " & ex.Message, "Error Impresión", MessageBoxButtons.OK, MessageBoxIcon.Error)
+        End Try
+    End Sub
+
+    ' --- DISEÑO DEL TICKET 80x40 mm (CON LOGO Y CÓDIGO DE BARRAS) ---
+    Private Sub pd_PrintPageCaja(sender As Object, e As PrintPageEventArgs)
+        Dim g As Graphics = e.Graphics
+
+        ' Fuentes para el ticket
+        Dim fontTitulo As New Font("Arial", 9, FontStyle.Bold)
+        Dim fontDestacado As New Font("Arial", 11, FontStyle.Bold)
+        Dim fontNormal As New Font("Arial", 8, FontStyle.Regular)
+        Dim brush As New SolidBrush(Color.Black)
+
+        ' 1. DIBUJAR LOGO (Ajustado arriba a la izquierda)
+        Try
+            ' Reemplaza "LogoEmpresa" por el nombre exacto de tu imagen en My.Resources
+            Dim logo As Image = My.Resources.logo
+            ' Posición X=10, Y=10. Tamaño: 60px ancho, 45px alto
+            g.DrawImage(logo, 10, 10, 60, 45)
+        Catch ex As Exception
+            ' Si el logo falla o no existe, dibujamos un rectángulo de reemplazo para que no caiga el sistema
+            g.DrawRectangle(Pens.Black, 10, 10, 60, 45)
+            g.DrawString("LOGO", fontNormal, brush, 20, 25)
+        End Try
+
+        ' 2. DIBUJAR TEXTOS (A la derecha del logo)
+        Dim xTexto As Integer = 75
+        Dim yTexto As Integer = 10
+        Dim interlineado As Integer = 17
+
+        g.DrawString("ETIQUETA DE CAJA", fontTitulo, brush, xTexto, yTexto)
+        yTexto += interlineado
+
+        g.DrawString("N° Caja: " & cajaPrintNum, fontDestacado, brush, xTexto, yTexto)
+        yTexto += interlineado + 4
+
+        g.DrawString(cajaPrintPallet, fontTitulo, brush, xTexto, yTexto)
+        yTexto += interlineado
+
+        ' Juntamos producto y variedad para ahorrar espacio
+        g.DrawString(cajaPrintProd & " | " & cajaPrintVar, fontNormal, brush, xTexto, yTexto)
+        yTexto += interlineado
+
+        g.DrawString("Calibre: " & cajaPrintCalibre, fontNormal, brush, xTexto, yTexto)
+
+        ' 3. DIBUJAR CÓDIGO DE BARRAS (En la parte inferior)
+        ' Usaremos el Número de Caja como dato para el código
+        Dim imgCodigoBarras As Bitmap = GenerarCodigoBarras(cajaPrintNum)
+        If imgCodigoBarras IsNot Nothing Then
+            ' Posición X=10, Y=100. Tamaño: 290px de ancho por 45px de alto (ocupa todo el ancho inferior)
+            g.DrawImage(imgCodigoBarras, 10, 100, 290, 45)
+        End If
+
+    End Sub
+
+    ' --- FUNCIÓN PARA GENERAR LA IMAGEN DEL CÓDIGO DE BARRAS ---
+    Private Function GenerarCodigoBarras(codigo As String) As Bitmap
+        Try
+            Dim writer As New BarcodeWriter()
+            ' Code 128 es el estándar más eficiente para números y letras en industria
+            writer.Format = BarcodeFormat.CODE_128
+            writer.Options = New EncodingOptions() With {
+                .Width = 290,
+                .Height = 45,
+                .Margin = 0,
+                .PureBarcode = False ' En false muestra el número abajo del código. Pon True si solo quieres las barras.
+            }
+            Return writer.Write(codigo)
+        Catch ex As Exception
+            Return Nothing
+        End Try
+    End Function
+
 
 End Class

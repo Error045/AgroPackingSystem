@@ -85,7 +85,7 @@ Partial Class ucUbicacionPalletsDespacho
         '
         Me.cmbUbicacionGeneral.Font = New System.Drawing.Font("Microsoft Sans Serif", 13.8!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
         Me.cmbUbicacionGeneral.FormattingEnabled = True
-        Me.cmbUbicacionGeneral.Location = New System.Drawing.Point(254, 124)
+        Me.cmbUbicacionGeneral.Location = New System.Drawing.Point(253, 124)
         Me.cmbUbicacionGeneral.Name = "cmbUbicacionGeneral"
         Me.cmbUbicacionGeneral.Size = New System.Drawing.Size(270, 37)
         Me.cmbUbicacionGeneral.TabIndex = 7

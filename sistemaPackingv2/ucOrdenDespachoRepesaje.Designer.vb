@@ -23,9 +23,10 @@ Partial Class ucOrdenDespachoRepesaje
     <System.Diagnostics.DebuggerStepThrough()>
     Private Sub InitializeComponent()
         Me.pnlContenedorPesaje = New System.Windows.Forms.Panel()
-        Me.UcOrdenDespachoRepesajeActualizar1 = New sistemaPackingv2.ucOrdenDespachoRepesajeActualizar()
         Me.UcPesaje1 = New sistemaPackingv2.ucPesaje()
+        Me.UcOrdenDespachoRepesajeActualizar1 = New sistemaPackingv2.ucOrdenDespachoRepesajeActualizar()
         Me.UcOrdenDespachoRepesajeValidacion1 = New sistemaPackingv2.ucOrdenDespachoRepesajeValidacion()
+        Me.UcUbicacionPalletsDespacho1 = New sistemaPackingv2.ucUbicacionPalletsDespacho()
         Me.pnlContenedorPesaje.SuspendLayout()
         Me.SuspendLayout()
         '
@@ -36,13 +37,6 @@ Partial Class ucOrdenDespachoRepesaje
         Me.pnlContenedorPesaje.Name = "pnlContenedorPesaje"
         Me.pnlContenedorPesaje.Size = New System.Drawing.Size(1070, 771)
         Me.pnlContenedorPesaje.TabIndex = 1
-        '
-        'UcOrdenDespachoRepesajeActualizar1
-        '
-        Me.UcOrdenDespachoRepesajeActualizar1.Location = New System.Drawing.Point(3, 3)
-        Me.UcOrdenDespachoRepesajeActualizar1.Name = "UcOrdenDespachoRepesajeActualizar1"
-        Me.UcOrdenDespachoRepesajeActualizar1.Size = New System.Drawing.Size(1100, 800)
-        Me.UcOrdenDespachoRepesajeActualizar1.TabIndex = 2
         '
         'UcPesaje1
         '
@@ -59,12 +53,26 @@ Partial Class ucOrdenDespachoRepesaje
         Me.UcPesaje1.TaraSeleccionada = 0R
         Me.UcPesaje1.Titulo = "Contenedor #1"
         '
+        'UcOrdenDespachoRepesajeActualizar1
+        '
+        Me.UcOrdenDespachoRepesajeActualizar1.Location = New System.Drawing.Point(3, 3)
+        Me.UcOrdenDespachoRepesajeActualizar1.Name = "UcOrdenDespachoRepesajeActualizar1"
+        Me.UcOrdenDespachoRepesajeActualizar1.Size = New System.Drawing.Size(1100, 800)
+        Me.UcOrdenDespachoRepesajeActualizar1.TabIndex = 2
+        '
         'UcOrdenDespachoRepesajeValidacion1
         '
         Me.UcOrdenDespachoRepesajeValidacion1.Location = New System.Drawing.Point(3, 3)
         Me.UcOrdenDespachoRepesajeValidacion1.Name = "UcOrdenDespachoRepesajeValidacion1"
         Me.UcOrdenDespachoRepesajeValidacion1.Size = New System.Drawing.Size(1094, 783)
         Me.UcOrdenDespachoRepesajeValidacion1.TabIndex = 3
+        '
+        'UcUbicacionPalletsDespacho1
+        '
+        Me.UcUbicacionPalletsDespacho1.Location = New System.Drawing.Point(0, 0)
+        Me.UcUbicacionPalletsDespacho1.Name = "UcUbicacionPalletsDespacho1"
+        Me.UcUbicacionPalletsDespacho1.Size = New System.Drawing.Size(1200, 800)
+        Me.UcUbicacionPalletsDespacho1.TabIndex = 4
         '
         'ucOrdenDespachoRepesaje
         '
@@ -73,6 +81,7 @@ Partial Class ucOrdenDespachoRepesaje
         Me.Controls.Add(Me.UcOrdenDespachoRepesajeValidacion1)
         Me.Controls.Add(Me.pnlContenedorPesaje)
         Me.Controls.Add(Me.UcOrdenDespachoRepesajeActualizar1)
+        Me.Controls.Add(Me.UcUbicacionPalletsDespacho1)
         Me.Name = "ucOrdenDespachoRepesaje"
         Me.Size = New System.Drawing.Size(1100, 800)
         Me.pnlContenedorPesaje.ResumeLayout(False)
@@ -83,4 +92,5 @@ Partial Class ucOrdenDespachoRepesaje
     Friend WithEvents UcPesaje1 As ucPesaje
     Friend WithEvents UcOrdenDespachoRepesajeActualizar1 As ucOrdenDespachoRepesajeActualizar
     Friend WithEvents UcOrdenDespachoRepesajeValidacion1 As ucOrdenDespachoRepesajeValidacion
+    Friend WithEvents UcUbicacionPalletsDespacho1 As ucUbicacionPalletsDespacho
 End Class

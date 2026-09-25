@@ -22,7 +22,7 @@ Public Class ucTicket
         Try
             ConexionBD.Abrir()
 
-            Dim sql As String = "SELECT codigo, recepcion,prefijo , tipo,productor, producto, variedad, tara, bruto, neto, ciclo, numero, calibre, estado, fecha, hora " &
+            Dim sql As String = "SELECT codigo, recepcion,prefijo , tipo,productor, producto, variedad, tara, bruto, neto, ciclo, numero_pesaje, numero, calibre, estado, fecha, hora " &
                              "FROM vw_recepciones_detalles_resumen " &
                              "WHERE recepcion = @idR AND ciclo = @ciclo"
 
@@ -219,26 +219,26 @@ Public Class ucTicket
         Dim y As Integer = 20
 
         Using fTitulo As New Font("Arial", 14, FontStyle.Bold),
-              fCalibreNumero As New Font("Arial", 38, FontStyle.Bold),
-              fCalibreLabel As New Font("Arial", 8, FontStyle.Bold),
-              fDatosLabel As New Font("Arial", 11, FontStyle.Bold),
-              fDatosValor As New Font("Arial", 11),
-              fNetoValue As New Font("Arial", 15, FontStyle.Bold),
-              fTimestamp As New Font("Arial", 9, FontStyle.Italic),
-              fEtiqueta As New Font("Arial", 9, FontStyle.Italic)
+                fCalibreNumero As New Font("Arial", 38, FontStyle.Bold),
+                fCalibreLabel As New Font("Arial", 8, FontStyle.Bold),
+                fDatosLabel As New Font("Arial", 11, FontStyle.Bold),
+                fDatosValor As New Font("Arial", 11),
+                fNetoValue As New Font("Arial", 15, FontStyle.Bold),
+                fTimestamp As New Font("Arial", 9, FontStyle.Italic)
 
-            ' 0. LEER EL ID
+            ' 0. LEER EL ID Y EL PESAJE (Para usarlo al final junto a la fecha)
             Dim codigoBin As String = ObtenerTextoCelda(row, "codigo")
+            Dim numeroPesaje As String = ObtenerTextoCelda(row, "numero_pesaje")
 
             ' 1. CÓDIGO QR A LA IZQUIERDA
             Dim escritorQR As New ZXing.BarcodeWriter With {
-                .Format = ZXing.BarcodeFormat.QR_CODE
-            }
+            .Format = ZXing.BarcodeFormat.QR_CODE
+        }
             escritorQR.Options = New ZXing.QrCode.QrCodeEncodingOptions With {
-                .Height = 75,
-                .Width = 75,
-                .Margin = 0
-            }
+            .Height = 75,
+            .Width = 75,
+            .Margin = 0
+        }
             Using bmpQR As Bitmap = escritorQR.Write(codigoBin)
                 If bmpQR IsNot Nothing Then
                     e.Graphics.DrawImage(bmpQR, x, y, 75, 75)
@@ -256,38 +256,56 @@ Public Class ucTicket
             Dim tamCalNum = e.Graphics.MeasureString(numCalibre, fCalibreNumero)
             e.Graphics.DrawString(numCalibre, fCalibreNumero, Brushes.Black, recCalibre.X + (80 - tamCalNum.Width) / 2, recCalibre.Y + 18)
 
-            ' 3. TÍTULO EN EL MEDIO (CENTRADO)
-            Dim titulo As String = "PALTAS EL CHEJO"
-            Dim tamTitulo = e.Graphics.MeasureString(titulo, fTitulo)
-            ' Centrado horizontal entre el QR y el Calibre
-            Dim xTitulo As Single = (anchoPapel - tamTitulo.Width) / 2
-            ' Centrado vertical alineado a la altura de 75px del QR/Calibre
-            Dim yTitulo As Single = y + ((75 - tamTitulo.Height) / 2)
-            e.Graphics.DrawString(titulo, fTitulo, Brushes.Black, xTitulo, yTitulo)
+            ' 3. IMAGEN EN EL MEDIO (CENTRADA) CON RESPALDO DE TEXTO POR SEGURIDAD
+            Dim imagenCargada As Boolean = False
+            Try
+                ' Intenta cargar la imagen desde los recursos del proyecto
+                Dim imgLogo As Image = My.Resources.logo ' Reemplaza 'logo' por el nombre exacto de tu archivo de imagen
+                If imgLogo IsNot Nothing Then
+                    Dim anchoImg As Integer = 180 ' Ajusta el ancho deseado
+                    Dim altoImg As Integer = 80  ' Ajusta la altura deseada (máx 75 para alinearse con el QR/Calibre)
+                    Dim xImg As Single = (anchoPapel - anchoImg) / 2
+                    Dim yImg As Single = y + ((75 - altoImg) / 2)
+
+                    e.Graphics.DrawImage(imgLogo, xImg, yImg, anchoImg, altoImg)
+                    imagenCargada = True
+                End If
+            Catch
+                ' Si ocurre algún error al cargar la imagen, imagenCargada se mantiene en False
+                imagenCargada = False
+            End Try
+
+            ' Si la imagen no se pudo cargar por seguridad, dibujamos el título de texto tradicional
+            If Not imagenCargada Then
+                Dim titulo As String = "PALTAS EL CHEJO"
+                Dim tamTitulo = e.Graphics.MeasureString(titulo, fTitulo)
+                Dim xTitulo As Single = (anchoPapel - tamTitulo.Width) / 2
+                Dim yTitulo As Single = y + ((75 - tamTitulo.Height) / 2)
+                e.Graphics.DrawString(titulo, fTitulo, Brushes.Black, xTitulo, yTitulo)
+            End If
 
             ' 4. LÍNEA SEPARADORA CABECERA
             y += 85
             e.Graphics.DrawLine(Pens.Black, x, y, anchoPapel - x, y)
             y += 15
 
-            ' 5. LECTURA Y DIBUJO DE DATOS
+            ' 5. LECTURA Y DIBUJO DE DATOS (Se eliminó "Pesaje" de esta lista)
             Dim bruto As Decimal = ObtenerDecimalCelda(row, "bruto")
             Dim neto As Decimal = ObtenerDecimalCelda(row, "neto")
             Dim tara As Decimal = ObtenerDecimalCelda(row, "tara")
-            ' Dim etiqueta As String = ObtenerTextoCelda(row, "etiqueta")
 
             Dim datos As New Dictionary(Of String, String) From {
-                {"Código ID:", codigoBin},
-                {"Recepción:", ObtenerTextoCelda(row, "recepcion")},
-                {"Tipo:", ObtenerTextoCelda(row, "tipo")},
-                {"Ciclo:", ObtenerTextoCelda(row, "ciclo")},
-                {"Productor:", ObtenerTextoCelda(row, "productor")},
-                {"Producto:", ObtenerTextoCelda(row, "producto")},
-                {"Variedad:", ObtenerTextoCelda(row, "variedad")},
-                {"Calibre:", ObtenerTextoCelda(row, "calibre")},
-                {"Kilos Brutos:", bruto.ToString("#,##0.#") & " kg"},
-                {"Tara:", tara.ToString("#,##0.#") & " kg"}
-            }
+            {"Código ID:", codigoBin},
+            {"Recepción:", ObtenerTextoCelda(row, "recepcion")},
+            {"Tipo:", ObtenerTextoCelda(row, "tipo")},
+            {"Ciclo:", ObtenerTextoCelda(row, "ciclo")},
+            {"Productor:", ObtenerTextoCelda(row, "productor")},
+            {"Producto:", ObtenerTextoCelda(row, "producto")},
+            {"Variedad:", ObtenerTextoCelda(row, "variedad")},
+            {"Calibre:", ObtenerTextoCelda(row, "calibre")},
+            {"Kilos Brutos:", bruto.ToString("#,##0.#") & " kg"},
+            {"Tara:", tara.ToString("#,##0.#") & " kg"}
+        }
 
             Dim posXValor As Integer = 140
             For Each item In datos
@@ -315,11 +333,21 @@ Public Class ucTicket
                 End If
             End Using
 
-            ' 8. FECHA Y HORA REGISTRO
+            ' 8. FECHA Y HORA REGISTRO (Izquierda) + VALOR DE PESAJE (Derecha opuesta)
             Dim fechaVal As String = ObtenerTextoCelda(row, "fecha")
             Dim horaVal As String = ObtenerTextoCelda(row, "hora")
-            e.Graphics.DrawString($"Fecha Reg: {fechaVal} {horaVal}", fTimestamp, Brushes.Black, x, y)
-            ' e.Graphics.DrawString($"Etiqueta: {etiqueta}", fEtiqueta, Brushes.Black, x, y)
+
+            ' Dibujar Fecha y Hora a la izquierda
+            Dim textoFecha As String = $"Fecha Reg: {fechaVal} {horaVal}"
+            e.Graphics.DrawString(textoFecha, fTimestamp, Brushes.Black, x, y)
+
+            ' Dibujar Pesaje al lado derecho opuesto del papel
+            If Not String.IsNullOrEmpty(numeroPesaje) Then
+                Dim textoPesaje As String = $"Pesaje: {numeroPesaje}"
+                Dim tamPesaje = e.Graphics.MeasureString(textoPesaje, fTimestamp)
+                Dim xDerecha As Single = anchoPapel - x - tamPesaje.Width
+                e.Graphics.DrawString(textoPesaje, fTimestamp, Brushes.Black, xDerecha, y)
+            End If
         End Using
     End Sub
 

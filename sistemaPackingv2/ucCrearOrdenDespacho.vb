@@ -58,15 +58,15 @@ Public Class ucCrearOrdenDespacho
 
         Private Sub CargarComboboxClientes()
             Try
-                ' Buscamos clientes únicos que tengan stock disponible en operaciones de Servicio
-                ' Nota: Ajusta "nombre_cliente" al nombre real de la columna en tu vista o tabla
-                Dim sql As String = "SELECT DISTINCT personas_id, p.nombre As nombre_cliente,a.recepciones_id " &
+            ' Buscamos clientes únicos que tengan stock disponible en operaciones de Servicio
+            ' Nota: Ajusta "nombre_cliente" al nombre real de la columna en tu vista o tabla
+            Dim sql As String = "SELECT DISTINCT a.personas_id, p.nombre As nombre_cliente,a.recepciones_id " &
                                 "From vw_inventario_bines a " &
                                 "INNER Join personas p ON a.personas_id = p.id " &
-                                "WHERE tipos_operaciones_id = 2 And kilos_disponibles > 0 " &
+                                "WHERE a.tipos_operaciones_id = 2 And a.kilos_disponibles > 0 " &
                                 "ORDER BY nombre_cliente ASC;"
 
-                Dim dtClientes As New DataTable()
+            Dim dtClientes As New DataTable()
 
                 Using cmd As New MySqlCommand(sql, ConexionBD.conexion)
                     Dim da As New MySqlDataAdapter(cmd)
@@ -78,10 +78,10 @@ Public Class ucCrearOrdenDespacho
 
                 cmbPersona.DataSource = dtClientes
                 cmbPersona.DisplayMember = "nombre_cliente" ' Lo que ve el usuario
-                cmbPersona.ValueMember = "personas_id"      ' El ID interno
+            cmbPersona.ValueMember = "a.personas_id"      ' El ID interno
 
-                ' Añadimos el manejador de eventos nuevamente
-                AddHandler cmbPersona.SelectedIndexChanged, AddressOf cmbPersona_SelectedIndexChanged
+            ' Añadimos el manejador de eventos nuevamente
+            AddHandler cmbPersona.SelectedIndexChanged, AddressOf cmbPersona_SelectedIndexChanged
 
                 ' Limpiamos la selección por defecto
                 cmbPersona.SelectedIndex = -1

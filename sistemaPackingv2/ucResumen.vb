@@ -139,10 +139,10 @@ Public Class ucResumen
 
 
 
-            ' 3. Definir SQL de Ubicaciones
+            ' 3. Definir SQL de Ubicaciones (AGREGADO funciones_id)
             Dim sqlUbicaciones As String = If(esFlujoEstandar,
-                                      "SELECT id, nombre FROM tipos_ubicaciones WHERE id = 1",
-                                      "SELECT id, nombre FROM tipos_ubicaciones WHERE id <> 1")
+                                      "SELECT id, nombre, IFNULL(funciones_id, 0) AS funciones_id FROM tipos_ubicaciones WHERE id = 1",
+                                      "SELECT id, nombre, IFNULL(funciones_id, 0) AS funciones_id FROM tipos_ubicaciones WHERE id <> 1")
 
             Dim dtUbicaciones As DataTable = ObtenerDatos(sqlUbicaciones)
             Dim colUbi As DataGridViewComboBoxColumn = DirectCast(dgvResumen.Columns("colUbicacion"), DataGridViewComboBoxColumn)
@@ -219,20 +219,24 @@ Public Class ucResumen
                     ' SQL 1: Maestro de contenedores (Ajustado estrictamente a tu CREATE TABLE)  'etiqueta_ciclo, ' @etiqueta,
                     Dim sqlMaster As String = "INSERT INTO contenedores (" &
             "recepciones_id, tipos_contenedores_id, productos_id, variedades_id, " &
-            "calibres_id, ciclo,  kilos_brutos, kilos_netos, " &
+            "calibres_id, ciclo,numero_pesaje , kilos_brutos, kilos_netos, " &
             "tipos_ubicaciones_id, estados_contenedores_id, fecha_registro, users_id_registro,estado) " &
             "VALUES (" &
             "@idR, @idTipoCont, @idProduc, @idVar, " &
-            "@idCalibre, @nCiclo, @bruto, @neto, " &
+            "@idCalibre, @nCiclo, @numeroPesaje, @bruto, @neto, " &
             "@idUbicacion, @idEstado, CURDATE(), @idUser,1)"
 
                     ' SQL 2: Historial unificado de movimientos
                     Dim sqlHistorial As String = "INSERT INTO contenedores_historial (" &
             "tipos_movimientos_id, tipos_contenedores_id, contenedores_id, " & 'cambio de elemento_id por contenedores_id
-            "tipos_ubicaciones_id, estados_contenedores_id, kilos_brutos, kilos_netos, users_id,estado) " &
+            "tipos_ubicaciones_id, estados_contenedores_id, ciclo,numero_pesaje ,kilos_brutos, kilos_netos, users_id,estado) " &
             "VALUES (" &
             "@idTipoMov, @idTipoCont, @idContenedores, " &
-            "@idUbicacion, @idEstado, @bruto, @neto, @idUser,1)"
+            "@idUbicacion, @idEstado, @nCiclo, @numeroPesaje, @bruto, @neto, @idUser,1)"
+
+                    ' --- NUEVO: Recuperamos la tabla de ubicaciones para consultar el funciones_id sin ir a la BD de nuevo
+                    Dim colUbi As DataGridViewComboBoxColumn = DirectCast(dgvResumen.Columns("colUbicacion"), DataGridViewComboBoxColumn)
+                    Dim dtUbicaciones As DataTable = DirectCast(colUbi.DataSource, DataTable)
 
                     For Each row As DataGridViewRow In dgvResumen.Rows
                         If row.IsNewRow Then Continue For
@@ -240,8 +244,26 @@ Public Class ucResumen
                         Dim idContenedorGenerado As Long = 0
                         Dim idTipoContenedor As Object = row.Cells("colIdCont").Value
                         Dim idUbicacion As Object = row.Cells("colUbicacion").Value
-                        Dim idEstadoInicial As Integer = 1 ' 1 = Recepcionado / Disponible
+                        'Dim idEstadoInicial As Integer = 1  ' 1 = Recepcionado / Disponible
                         Dim idUsuarioActual As Integer = 1 ' Cambiar por tu variable global de sesión (ej. UsuarioLogueado.Id)
+
+                        ' --- NUEVO: Lógica dinámica de Estado según funciones_id ---
+                        Dim idEstadoInicial As Integer = 1  ' 1 = Recepcionado / Disponible (Por defecto)
+                        If dtUbicaciones IsNot Nothing AndAlso idUbicacion IsNot Nothing Then
+                            Dim filas = dtUbicaciones.Select("id = " & idUbicacion.ToString())
+                            If filas.Length > 0 Then
+                                Dim funciones_id As Integer = Convert.ToInt32(filas(0)("funciones_id"))
+                                If funciones_id = 7 Then
+                                    idEstadoInicial = 14 ' Maduración
+                                ElseIf funciones_id = 5 Then
+                                    idEstadoInicial = 6  ' Refrigeración
+                                End If
+                            End If
+                        End If
+
+                        ' --- NUEVO: Rescatar el número de orden de pesaje ---
+                        ' Asumimos que lo insertaste en la columna de índice 0. Si la columna tiene un Name específico (ej. "colNumero"), pon el Name.
+                        Dim numeroPesaje As Object = row.Cells(0).Value
 
                         ' --- PASO A: INSERTAR EN MAESTRO ---
                         Using cmdMaster As New MySqlCommand(sqlMaster, ConexionBD.conexion, transaccion)
@@ -251,6 +273,7 @@ Public Class ucResumen
                             cmdMaster.Parameters.AddWithValue("@idVar", Me.SelectedIdVariedad)
                             cmdMaster.Parameters.AddWithValue("@idCalibre", row.Cells("colCalibre").Value)
                             cmdMaster.Parameters.AddWithValue("@nCiclo", proximoCiclo)
+                            cmdMaster.Parameters.AddWithValue("@numeroPesaje", numeroPesaje) ' Nuevo campo
                             cmdMaster.Parameters.AddWithValue("@etiqueta", etiqueta)
                             cmdMaster.Parameters.AddWithValue("@bruto", row.Cells("colBruto").Value)
                             cmdMaster.Parameters.AddWithValue("@neto", row.Cells("colNeto").Value)
@@ -273,6 +296,8 @@ Public Class ucResumen
                             cmdHistorial.Parameters.AddWithValue("@idContenedores", idContenedorGenerado) ' Enlazamos el maestro con el historial
                             cmdHistorial.Parameters.AddWithValue("@idUbicacion", idUbicacion)
                             cmdHistorial.Parameters.AddWithValue("@idEstado", idEstadoInicial)
+                            cmdHistorial.Parameters.AddWithValue("@nCiclo", proximoCiclo)
+                            cmdHistorial.Parameters.AddWithValue("@numeroPesaje", numeroPesaje) ' Nuevo campo
                             cmdHistorial.Parameters.AddWithValue("@bruto", row.Cells("colBruto").Value)
                             cmdHistorial.Parameters.AddWithValue("@neto", row.Cells("colNeto").Value)
                             cmdHistorial.Parameters.AddWithValue("@idUser", idUsuarioActual)

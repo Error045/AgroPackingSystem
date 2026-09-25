@@ -1,13 +1,14 @@
 ﻿
 Public Class ucOrdenDespachoRepesaje
 
-        Enum PasoRepesaje
-            Busqueda = 0
-            Pesaje = 1
-            Actualizacion = 2
-        End Enum
+    Enum PasoRepesaje
+        Busqueda = 0
+        Pesaje = 1
+        Actualizacion = 2
+        Ubicacion = 3
+    End Enum
 
-        Private PasoActual As Integer = 1
+    Private PasoActual As Integer = 1
         Private CantidadTotalAProcesar As Integer = 0
         Private sesionActual As New SesionPesaje()
         Private controlPesajeUnico As ucPesaje
@@ -19,19 +20,23 @@ Public Class ucOrdenDespachoRepesaje
             pnlContenedorPesaje.Visible = False
             UcOrdenDespachoRepesajeActualizar1.Visible = False
 
-            Select Case paso
-                Case PasoRepesaje.Busqueda
-                    UcOrdenDespachoRepesajeValidacion1.Visible = True
-                    UcOrdenDespachoRepesajeValidacion1.BringToFront()
-                Case PasoRepesaje.Pesaje
-                    pnlContenedorPesaje.Visible = True
-                    pnlContenedorPesaje.BringToFront()
-                Case PasoRepesaje.Actualizacion
-                    UcOrdenDespachoRepesajeActualizar1.Visible = True
-                    UcOrdenDespachoRepesajeActualizar1.BringToFront()
-                    UcOrdenDespachoRepesajeActualizar1.Dock = DockStyle.Fill
-            End Select
-        End Sub
+        Select Case paso
+            Case PasoRepesaje.Busqueda
+                UcOrdenDespachoRepesajeValidacion1.Visible = True
+                UcOrdenDespachoRepesajeValidacion1.BringToFront()
+            Case PasoRepesaje.Pesaje
+                pnlContenedorPesaje.Visible = True
+                pnlContenedorPesaje.BringToFront()
+            Case PasoRepesaje.Actualizacion
+                UcOrdenDespachoRepesajeActualizar1.Visible = True
+                UcOrdenDespachoRepesajeActualizar1.BringToFront()
+                UcOrdenDespachoRepesajeActualizar1.Dock = DockStyle.Fill
+            Case PasoRepesaje.Ubicacion
+                UcUbicacionPalletsDespacho1.Visible = True
+                UcUbicacionPalletsDespacho1.BringToFront()
+                UcUbicacionPalletsDespacho1.Dock = DockStyle.Fill
+        End Select
+    End Sub
 
         Private Sub ucOrdenDespachoRepesaje_Load(sender As Object, e As EventArgs) Handles MyBase.Load
             GestionarPasos(PasoRepesaje.Busqueda)
@@ -133,37 +138,66 @@ Public Class ucOrdenDespachoRepesaje
             End If
         End Sub
 
-        Private Sub FinalizarYEnviarAActualizar()
-            Dim loteParaGuardar As New List(Of Dictionary(Of String, String))
+    Private Sub FinalizarYEnviarAActualizar()
+        Dim loteParaGuardar As New List(Of Dictionary(Of String, String))
 
-            For i As Integer = 0 To sesionActual.PesajesCompletados.Count - 1
-                Dim pesajeFinal = sesionActual.PesajesCompletados(i)
-                Dim datosOriginales = listaDatosRepesaje(i)
+        For i As Integer = 0 To sesionActual.PesajesCompletados.Count - 1
+            Dim pesajeFinal = sesionActual.PesajesCompletados(i)
+            Dim datosOriginales = listaDatosRepesaje(i)
 
-                Dim info As New Dictionary(Of String, String) From {
-                    {"ID_PALLET", datosOriginales("ID_PALLET")},
-                    {"Bruto", pesajeFinal.PesoBruto.ToString("F2")},
-                    {"Tara", pesajeFinal.Tara.ToString("F2")}
-                }
-                loteParaGuardar.Add(info)
-            Next
+            Dim info As New Dictionary(Of String, String) From {
+            {"ID_PALLET", datosOriginales("ID_PALLET")},
+            {"Bruto", pesajeFinal.PesoBruto.ToString("F2")},
+            {"Tara", pesajeFinal.Tara.ToString("F2")},
+            {"Neto", (pesajeFinal.PesoBruto - pesajeFinal.Tara).ToString("F2")},
+            {"TaraTotal", pesajeFinal.Tara.ToString("F2")}
+        }
+            loteParaGuardar.Add(info)
+        Next
 
-            UcOrdenDespachoRepesajeActualizar1.RecibirDatosParaRevision(loteParaGuardar)
-            GestionarPasos(PasoRepesaje.Actualizacion)
-        End Sub
 
-        ' Manejadores de los eventos de la pantalla Final (Actualizar)
-        Private Sub UcOrdenDespachoRepesajeActualizar1_ProcesoCancelado() Handles UcOrdenDespachoRepesajeActualizar1.ProcesoCancelado
+        ' Enviamos la lista de pesos Y la ubicación de destino
+        UcOrdenDespachoRepesajeActualizar1.RecibirDatosParaRevision(loteParaGuardar)
+        GestionarPasos(PasoRepesaje.Actualizacion)
+    End Sub
+
+
+
+    ' Manejadores de los eventos de la pantalla Final (Actualizar)
+    Private Sub UcOrdenDespachoRepesajeActualizar1_ProcesoCancelado() Handles UcOrdenDespachoRepesajeActualizar1.ProcesoCancelado
             UcOrdenDespachoRepesajeValidacion1.Reiniciar()
             GestionarPasos(PasoRepesaje.Busqueda)
         End Sub
 
-        Private Sub UcOrdenDespachoRepesajeActualizar1_SolicitarGuardadoFinal(datosFinales As List(Of Dictionary(Of String, String))) Handles UcOrdenDespachoRepesajeActualizar1.SolicitarGuardadoFinal
-            UcOrdenDespachoRepesajeValidacion1.Reiniciar()
-            GestionarPasos(PasoRepesaje.Busqueda)
-        End Sub
+    Private Sub UcOrdenDespachoRepesajeActualizar1_SolicitarGuardadoFinal(datosFinales As List(Of Dictionary(Of String, String))) Handles UcOrdenDespachoRepesajeActualizar1.SolicitarGuardadoFinal
+        UcOrdenDespachoRepesajeValidacion1.Reiniciar()
+        GestionarPasos(PasoRepesaje.Busqueda)
+    End Sub
 
-    End Class
+    ' Este evento se activa cuando el usuario avanza desde la grilla de revisión
+    Private Sub UcOrdenDespachoRepesajeActualizar1_DatosAprobados(loteRevisado As List(Of Dictionary(Of String, String))) Handles UcOrdenDespachoRepesajeActualizar1.DatosAprobados
+
+        ' Le pasamos los datos ya revisados al control del ComboBox
+        UcUbicacionPalletsDespacho1.RecibirDatosParaGuardar(loteRevisado)
+
+        ' Ahora sí, mostramos la pantalla de ubicación
+        GestionarPasos(PasoRepesaje.Ubicacion)
+    End Sub
+
+    ' 🟢 Este evento se dispara automáticamente cuando UcUbicacionPalletsDespacho termina de guardar
+    Private Sub UcUbicacionPalletsDespacho1_LoteGuardadoExitosamente() Handles UcUbicacionPalletsDespacho1.LoteGuardadoExitosamente
+
+        ' 1. Limpiamos o reiniciamos el control de validación inicial para que quede listo para un nuevo lote
+        UcOrdenDespachoRepesajeValidacion1.Reiniciar() ' (O el nombre de tu método de limpieza en validación)
+
+        ' 2. Volvemos visualmente al primer paso del flujo
+        GestionarPasos(PasoRepesaje.Busqueda)
+
+        ' 3. Opcional: Mensaje de confirmación general en el orquestador si lo deseas
+        MessageBox.Show("Proceso de repesaje y ubicación finalizado con éxito.", "Ciclo Completado", MessageBoxButtons.OK, MessageBoxIcon.Information)
+    End Sub
+
+End Class
 
 
 

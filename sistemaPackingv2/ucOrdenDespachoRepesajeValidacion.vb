@@ -10,55 +10,69 @@ Public Class ucOrdenDespachoRepesajeValidacion
         Public Event LoteValidado(lotes As List(Of DataRow))
 
         Public Sub New()
-            InitializeComponent()
-            ConfigurarGrid()
+        InitializeComponent()
+
+        ConfigurarGrid()
         End Sub
 
-        Private Sub ucOrdenDespachoRepesajeValidacion_Load(sender As Object, e As EventArgs) Handles MyBase.Load
-            If Not Me.DesignMode Then
-                CargarPalletsDisponibles()
-            End If
-        End Sub
+    Private Sub ucOrdenDespachoRepesajeValidacion_Load(sender As Object, e As EventArgs) Handles MyBase.Load
+        If Not Me.DesignMode Then
+            CargarPalletsDisponibles()
+        End If
 
-        Private Sub ConfigurarGrid()
-            dgvContenedoresOrden.Columns.Add("id", "ID Pallet")
-            dgvContenedoresOrden.Columns.Add("despacho", "N° Despacho")
-            dgvContenedoresOrden.Columns.Add("numero_cajas", "N° Cajas")
-            dgvContenedoresOrden.Columns.Add("tipos_contenedores_id", "ID Tipo Cont.")
-            dgvContenedoresOrden.Columns.Add("tipo_contenedor", "Tipo Contenedor")
-            dgvContenedoresOrden.Columns.Add("tara", "Tara")
-            dgvContenedoresOrden.Columns.Add("kilos_brutos", "Kilos Brutos")
-            dgvContenedoresOrden.Columns.Add("kilos_netos", "Kilos Netos")
 
-            Dim colEliminar As New DataGridViewButtonColumn()
-            colEliminar.Name = "Eliminar"
-            colEliminar.HeaderText = "Acción"
-            colEliminar.Text = "❌ Quitar"
-            colEliminar.UseColumnTextForButtonValue = True
-            colEliminar.Width = 80
-            colEliminar.FlatStyle = FlatStyle.Flat
-            dgvContenedoresOrden.Columns.Add(colEliminar)
 
-            dgvContenedoresOrden.AllowUserToAddRows = False
-            dgvContenedoresOrden.ReadOnly = False
-            For Each col As DataGridViewColumn In dgvContenedoresOrden.Columns
-                col.ReadOnly = True
-            Next
-        End Sub
+    End Sub
 
-        Private Sub CargarPalletsDisponibles()
+
+
+    Private Sub ConfigurarGrid()
+        dgvContenedoresOrden.Columns.Add("id", "ID Pallet")
+        dgvContenedoresOrden.Columns.Add("despacho", "N° Despacho")
+        dgvContenedoresOrden.Columns.Add("numero_cajas", "N° Cajas")
+        dgvContenedoresOrden.Columns.Add("tipos_contenedores_id", "ID Tipo Cont.")
+        dgvContenedoresOrden.Columns.Add("tipo_contenedor", "Tipo Contenedor")
+        dgvContenedoresOrden.Columns.Add("tara", "Tara")
+        dgvContenedoresOrden.Columns.Add("kilos_brutos", "Kilos Brutos")
+        dgvContenedoresOrden.Columns.Add("kilos_netos", "Kilos Netos")
+
+        Dim colEliminar As New DataGridViewButtonColumn()
+        colEliminar.Name = "Eliminar"
+        colEliminar.HeaderText = "Acción"
+        colEliminar.Text = "❌ Quitar"
+        colEliminar.UseColumnTextForButtonValue = True
+        colEliminar.Width = 80
+        colEliminar.FlatStyle = FlatStyle.Flat
+        dgvContenedoresOrden.Columns.Add(colEliminar)
+
+        dgvContenedoresOrden.AllowUserToAddRows = False
+        dgvContenedoresOrden.ReadOnly = False
+        For Each col As DataGridViewColumn In dgvContenedoresOrden.Columns
+            col.ReadOnly = True
+        Next
+    End Sub
+
+    Private Sub ucOrdenDespachoRepesajeValidacion_VisibleChanged(sender As Object, e As EventArgs) Handles MyBase.VisibleChanged
+        If Me.Visible Then
+            ' Usamos un pequeño truco de ejecución para asegurar que gane el foco
+            txtBusquedaOrden.Focus()
+            txtBusquedaOrden.SelectAll() ' Opcional: Selecciona el texto si tuviera algo escrito
+        End If
+    End Sub
+
+    Private Sub CargarPalletsDisponibles()
             Try
-                ' 🟢 CONSULTA DE PALLETS EN DESPACHOS ACTIVOS
-                Dim sql As String =
+            ' 🟢 CONSULTA DE PALLETS EN DESPACHOS ACTIVOS
+            Dim sql As String =
                 "SELECT a.id AS 'ID Pallet', c.id AS 'N_Despacho', a.numero_cajas AS 'N_Cajas', " &
                 "a.tipos_contenedores_id, tc.nombre AS 'Tipo_Contenedor', tc.tara, a.kilos_brutos, a.kilos_netos " &
                 "FROM pallets a " &
                 "JOIN despachos_pallets b ON a.id = b.pallets_id " &
                 "JOIN despachos c ON b.despachos_id = c.id " &
                 "LEFT JOIN tipos_contenedores tc ON a.tipos_contenedores_id = tc.id " &
-                "WHERE c.estados_despachos_id = 1"
+                "WHERE c.estados_despachos_id = 1 AND a.estados_contenedores_id <> 17"
 
-                dtDisponibles = ConexionBD.ObtenerDatos(sql)
+            dtDisponibles = ConexionBD.ObtenerDatos(sql)
 
                 If dtDisponibles IsNot Nothing Then
                     dgvDisponiblesOrden.DataSource = dtDisponibles
@@ -171,6 +185,8 @@ Public Class ucOrdenDespachoRepesajeValidacion
             txtBusquedaOrden.Focus()
             CargarPalletsDisponibles()
         End Sub
-    End Class
+
+
+End Class
 
 

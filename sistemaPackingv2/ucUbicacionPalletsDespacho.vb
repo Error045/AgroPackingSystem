@@ -119,7 +119,8 @@ Public Class ucUbicacionPalletsDespacho
             "   estados_contenedores_id = CASE " &
             "       WHEN @ubicacionId IN(5,6) THEN 6 " & _ ' Si es la ubicación 5,6 Camaras frio 6
             "       WHEN @ubicacionId IN(7,8,9) THEN 14 " & _ ' Si es la ubicación 7,8,9, asigna Camaras Maduración 14
-            "       ELSE estados_contenedores_id " & _        ' Si no cumple ninguna, se queda con su valor actual
+            "       WHEN @ubicacionId IN(13) THEN 17 " &        ' Si es la ubicación 13, asigna Salida del packing, Despacho 17
+            "        ELSE estados_contenedores_id " & _        ' Si no cumple ninguna, se queda con su valor actual
             "   END, " &
             "   estados_progresos_pallets_id = 2, " &
             " fecha_registro = NOW() " &

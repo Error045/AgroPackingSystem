@@ -247,7 +247,9 @@ Public Class ucCrearOrden
 
             ' Método seguro para renombrar columnas
             ActualizarNombreColumna(dgvReporte, "id_bin", "ID BIN")
+            ActualizarNombreColumna(dgvReporte, "recepciones_id", "RECEPCION")
             ActualizarNombreColumna(dgvReporte, "Nombre_Ubicacion", "CÁMARA")
+            ActualizarNombreColumna(dgvReporte, "persona", "PERSONA")
             ActualizarNombreColumna(dgvReporte, "Nombre_Calibre", "CALIBRE")
             ActualizarNombreColumna(dgvReporte, "Kilos_Netos", "KILOS")
             ActualizarNombreColumna(dgvReporte, "Horas_En_Camara", "HORAS")
@@ -258,6 +260,9 @@ Public Class ucCrearOrden
             If dgvReporte.Columns.Contains("id_ubicacion") Then dgvReporte.Columns("id_ubicacion").Visible = False
             If dgvReporte.Columns.Contains("id_calibre") Then dgvReporte.Columns("id_calibre").Visible = False
             If dgvReporte.Columns.Contains("funciones_id") Then dgvReporte.Columns("funciones_id").Visible = False
+            If dgvReporte.Columns.Contains("personas_id") Then dgvReporte.Columns("personas_id").Visible = False
+            If dgvReporte.Columns.Contains("tipos_operaciones_id") Then dgvReporte.Columns("tipos_operaciones_id").Visible = False
+            If dgvReporte.Columns.Contains("Horas_En_Camara") Then dgvReporte.Columns("Horas_En_Camara").Visible = False
 
             ' Agregamos el botón de acción
             If Not dgvReporte.Columns.Contains("btnAgregar") Then
