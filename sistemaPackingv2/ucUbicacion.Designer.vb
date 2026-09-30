@@ -33,6 +33,7 @@ Partial Class ucUbicacion
         '
         'cmbUbicacionGeneral
         '
+        Me.cmbUbicacionGeneral.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList
         Me.cmbUbicacionGeneral.Font = New System.Drawing.Font("Microsoft Sans Serif", 18.0!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
         Me.cmbUbicacionGeneral.FormattingEnabled = True
         Me.cmbUbicacionGeneral.Location = New System.Drawing.Point(334, 152)

@@ -5,24 +5,154 @@ Imports ZXing
 Public Class ucProcesoCalibrado
 
     ' --- VARIABLE CLAVE ---
-    ' Esta bandera evita que los eventos se disparen a lo loco mientras llenamos los datos
+    ' Esta bandera evita que los eventos se disparen mientras llenamos o seteamos datos
     Private cargando As Boolean = True
+
+    ' --- VARIABLES PARA EDICIÓN ---
+    Private idContenedorEditar As Integer = 0
+    Private modoEdicion As Boolean = False
 
     ' 1. CARGA INICIAL
     Private Sub ucProcesoCalibrado_Load(sender As Object, e As EventArgs) Handles MyBase.Load
+        ConfigurarDGV()
         CargarComboProceso()
-        '  LlenarComboContenedor() ' <-- Agregar esta línea
     End Sub
 
-    ' 2. LÓGICA DEL COMBO PROCESO
-    Private Sub CargarComboProceso()
-        cargando = True ' Bloqueamos eventos
+    ' =========================================================================
+    ' ====================== CONFIGURACIÓN Y CARGA DGV ========================
+    ' =========================================================================
 
-        Dim sqlProceso As String = "SELECT a.id, CONCAT(a.id, ' - ', c.nombre) as nombre " &
-                                   "FROM procesos a " &
-                                   "JOIN recepciones b ON a.recepciones_id = b.id " &
-                                   "JOIN personas c ON b.personas_id = c.id " &
-                                   "WHERE a.estados_procesos_id = 1"
+    Private Sub ConfigurarDGV()
+        dgvRegistros.AutoGenerateColumns = False
+        dgvRegistros.Columns.Clear()
+
+        ' Columnas Ocultas con los IDs requeridos para la edición
+        dgvRegistros.Columns.Add(New DataGridViewTextBoxColumn With {.Name = "productos_id", .DataPropertyName = "productos_id", .Visible = False})
+        dgvRegistros.Columns.Add(New DataGridViewTextBoxColumn With {.Name = "variedades_id", .DataPropertyName = "variedades_id", .Visible = False})
+        dgvRegistros.Columns.Add(New DataGridViewTextBoxColumn With {.Name = "calibres_id", .DataPropertyName = "calibres_id", .Visible = False})
+
+        ' Columnas Visibles (Se define explícitamente el .Name para acceder mediante Cells("nombre"))
+        dgvRegistros.Columns.Add(New DataGridViewTextBoxColumn With {.Name = "codigo", .DataPropertyName = "codigo", .HeaderText = "ID", .Width = 50})
+        dgvRegistros.Columns.Add(New DataGridViewTextBoxColumn With {.Name = "producto", .DataPropertyName = "producto", .HeaderText = "Producto", .Width = 120})
+        dgvRegistros.Columns.Add(New DataGridViewTextBoxColumn With {.Name = "variedad", .DataPropertyName = "variedad", .HeaderText = "Variedad", .Width = 120})
+        dgvRegistros.Columns.Add(New DataGridViewTextBoxColumn With {.Name = "calibre", .DataPropertyName = "calibre", .HeaderText = "Calibre", .Width = 100})
+        dgvRegistros.Columns.Add(New DataGridViewTextBoxColumn With {.Name = "fecha", .DataPropertyName = "fecha", .HeaderText = "Fecha", .Width = 100})
+
+        ' Botón Modificar
+        Dim btnModificar As New DataGridViewButtonColumn()
+        btnModificar.HeaderText = "Editar"
+        btnModificar.Name = "btnModificar"
+        btnModificar.Text = "✏️ Modificar"
+        btnModificar.UseColumnTextForButtonValue = True
+        btnModificar.Width = 90
+        dgvRegistros.Columns.Add(btnModificar)
+
+        ' Botón Imprimir
+        Dim btnImprimir As New DataGridViewButtonColumn()
+        btnImprimir.HeaderText = "Imprimir"
+        btnImprimir.Name = "btnImprimir"
+        btnImprimir.Text = "🖨️️ Imprimir"
+        btnImprimir.UseColumnTextForButtonValue = True
+        btnImprimir.Width = 90
+        dgvRegistros.Columns.Add(btnImprimir)
+    End Sub
+
+    Private Sub CargarDGV()
+        If cargando Then Return
+        If cmbProceso.SelectedValue Is Nothing OrElse Not IsNumeric(cmbProceso.SelectedValue) Then Return
+
+        Try
+            ' CORRECCIÓN: Se añaden los campos c.productos_id, c.variedades_id y c.calibres_id
+            Dim sql As String = "SELECT v.codigo, c.productos_id, c.variedades_id, c.calibres_id, v.producto, v.variedad, v.calibre, v.fecha " &
+                                "FROM vw_calibrado_detalles_resumen v " &
+                                "JOIN contenedores c ON v.codigo = c.id " &
+                                "JOIN procesos_recepciones pr ON c.recepciones_id = pr.recepciones_id " &
+                                "WHERE v.estados_contenedores_id = 4 AND pr.procesos_id = @idProc " &
+                                "ORDER BY v.codigo DESC"
+
+            Dim dtRegistros As DataTable = ObtenerDatos(sql, {New MySqlParameter("@idProc", cmbProceso.SelectedValue)})
+            dgvRegistros.DataSource = dtRegistros
+        Catch ex As Exception
+            MessageBox.Show("Error al cargar la grilla: " & ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error)
+        End Try
+    End Sub
+
+    ' =========================================================================
+    ' ====================== EVENTOS DEL DATAGRIDVIEW =========================
+    ' =========================================================================
+
+    Private Sub dgvRegistros_CellContentClick(sender As Object, e As DataGridViewCellEventArgs) Handles dgvRegistros.CellContentClick
+        If e.RowIndex < 0 Then Return
+
+        Dim colName As String = dgvRegistros.Columns(e.ColumnIndex).Name
+
+        ' Botón Modificar
+        If colName = "btnModificar" Then
+            idContenedorEditar = Convert.ToInt32(dgvRegistros.Rows(e.RowIndex).Cells("codigo").Value)
+
+            ' Leer los IDs ocultos de la fila
+            Dim prodId As Object = dgvRegistros.Rows(e.RowIndex).Cells("productos_id").Value
+            Dim varId As Object = dgvRegistros.Rows(e.RowIndex).Cells("variedades_id").Value
+            Dim calId As Object = dgvRegistros.Rows(e.RowIndex).Cells("calibres_id").Value
+
+            ' CORRECCIÓN: Carga en cascada controlada paso a paso
+            cargando = True
+            cmbProducto.SelectedValue = prodId
+            cargando = False
+            LlenarComboVariedad()
+
+            cargando = True
+            cmbVariedad.SelectedValue = varId
+            cargando = False
+            LlenarComboCalibre()
+
+            cmbCalibre.SelectedValue = calId
+
+            ' Configurar la interfaz para modo edición
+            ConfigurarModoUI(esModoEdicion:=True)
+
+            ' Botón Imprimir
+        ElseIf colName = "btnImprimir" Then
+            Dim idContenedor As Integer = Convert.ToInt32(dgvRegistros.Rows(e.RowIndex).Cells("codigo").Value)
+            ImprimirTicket(idContenedor)
+        End If
+    End Sub
+
+    ' =========================================================================
+    ' ====================== MÉTODOS Y COMBOS DE INTERFAZ =====================
+    ' =========================================================================
+
+    Private Sub ConfigurarModoUI(esModoEdicion As Boolean)
+        modoEdicion = esModoEdicion
+        btnRegistrar.Visible = Not esModoEdicion
+        btnActualizar.Visible = esModoEdicion
+        btnCancelar.Visible = esModoEdicion
+
+        If esModoEdicion Then
+            lblTituloEstado.Text = "Modificando Registro..."
+        Else
+            lblTituloEstado.Text = "Nuevo Registro"
+            LimpiarFormulario()
+        End If
+    End Sub
+
+    Private Sub LimpiarFormulario()
+        idContenedorEditar = 0
+        cmbProducto.SelectedIndex = -1
+        cmbVariedad.SelectedIndex = -1
+        cmbCalibre.SelectedIndex = -1
+    End Sub
+
+    Private Sub CargarComboProceso()
+        cargando = True
+
+        Dim sqlProceso As String = "SELECT p.id, CONCAT(p.id, ' - ', per.nombre) as nombre " &
+                                   "FROM procesos p " &
+                                   "JOIN procesos_recepciones pr ON p.id = pr.procesos_id " &
+                                   "JOIN recepciones r ON pr.recepciones_id = r.id " &
+                                   "JOIN personas per ON r.personas_id = per.id " &
+                                   "WHERE p.estados_procesos_id = 1 " &
+                                   "GROUP BY p.id"
 
         Dim dtProceso As DataTable = ObtenerDatos(sqlProceso)
 
@@ -31,36 +161,32 @@ Public Class ucProcesoCalibrado
         cmbProceso.ValueMember = "id"
         cmbProceso.SelectedIndex = -1
 
-        cargando = False ' Desbloqueamos eventos
+        cargando = False
 
-        ' Forzamos la carga del hijo (Producto) basándonos en lo que quedó seleccionado
         LlenarComboProducto()
+        CargarDGV()
     End Sub
 
     Private Sub cmbProceso_SelectedIndexChanged(sender As Object, e As EventArgs) Handles cmbProceso.SelectedIndexChanged
-        ' Si estamos cargando datos por código, ignoramos el click del usuario
         If cargando Then Return
         LlenarComboProducto()
+        CargarDGV()
     End Sub
 
-    ' 3. LÓGICA DEL COMBO PRODUCTO
     Private Sub LlenarComboProducto()
-        cargando = True ' Bloqueamos eventos
+        cargando = True
 
-        ' Limpiamos los combos hijos
         cmbProducto.DataSource = Nothing
         cmbVariedad.DataSource = Nothing
 
-        ' Validamos que el proceso tenga un ID válido seleccionado
         If cmbProceso.SelectedValue IsNot Nothing AndAlso IsNumeric(cmbProceso.SelectedValue) Then
             Dim idProceso As Integer = Convert.ToInt32(cmbProceso.SelectedValue)
 
             Dim sql As String = "SELECT p.id, p.nombre " &
                                 "FROM productos p " &
                                 "JOIN contenedores c ON p.id = c.productos_id " &
-                                "JOIN recepciones r ON c.recepciones_id = r.id " &
-                                "JOIN procesos pr ON r.id = pr.recepciones_id " &
-                                "WHERE pr.id = @idProc " &
+                                "JOIN procesos_recepciones pr ON c.recepciones_id = pr.recepciones_id " &
+                                "WHERE pr.procesos_id = @idProc " &
                                 "GROUP BY p.id;"
 
             Dim param As New MySqlParameter("@idProc", idProceso)
@@ -70,7 +196,6 @@ Public Class ucProcesoCalibrado
             cmbProducto.DisplayMember = "nombre"
             cmbProducto.ValueMember = "id"
 
-            ' Auto-selección de Producto
             If dtProductos.Rows.Count > 0 Then
                 cmbProducto.SelectedIndex = 0
             Else
@@ -78,9 +203,7 @@ Public Class ucProcesoCalibrado
             End If
         End If
 
-        cargando = False ' Desbloqueamos eventos
-
-        ' Forzamos la carga del nieto (Variedad)
+        cargando = False
         LlenarComboVariedad()
     End Sub
 
@@ -89,14 +212,12 @@ Public Class ucProcesoCalibrado
         LlenarComboVariedad()
     End Sub
 
-    ' 4. LÓGICA DEL COMBO VARIEDAD
     Private Sub LlenarComboVariedad()
-        cargando = True ' Bloqueamos eventos
+        cargando = True
 
         cmbVariedad.DataSource = Nothing
-        cmbCalibre.DataSource = Nothing ' <-- NUEVO: Limpiamos calibres viejos al recalcular variedades
+        cmbCalibre.DataSource = Nothing
 
-        ' Validamos que Proceso y Producto tengan un ID válido
         If cmbProducto.SelectedValue IsNot Nothing AndAlso IsNumeric(cmbProducto.SelectedValue) AndAlso cmbProceso.SelectedValue IsNot Nothing AndAlso IsNumeric(cmbProceso.SelectedValue) Then
             Dim idProducto As Integer = Convert.ToInt32(cmbProducto.SelectedValue)
             Dim idProceso As Integer = Convert.ToInt32(cmbProceso.SelectedValue)
@@ -104,9 +225,8 @@ Public Class ucProcesoCalibrado
             Dim sql As String = "SELECT v.id, v.nombre " &
                                 "FROM variedades v " &
                                 "JOIN contenedores c ON v.id = c.variedades_id " &
-                                "JOIN recepciones r ON c.recepciones_id = r.id " &
-                                "JOIN procesos pr ON r.id = pr.recepciones_id " &
-                                "WHERE pr.id = @idProc AND c.productos_id = @idProd " &
+                                "JOIN procesos_recepciones pr ON c.recepciones_id = pr.recepciones_id " &
+                                "WHERE pr.procesos_id = @idProc AND c.productos_id = @idProd " &
                                 "GROUP BY v.id"
 
             Dim p1 As New MySqlParameter("@idProc", idProceso)
@@ -117,7 +237,6 @@ Public Class ucProcesoCalibrado
             cmbVariedad.DisplayMember = "nombre"
             cmbVariedad.ValueMember = "id"
 
-            ' Auto-selección de Variedad
             If dtVariedades.Rows.Count > 0 Then
                 cmbVariedad.SelectedIndex = 0
             Else
@@ -125,7 +244,7 @@ Public Class ucProcesoCalibrado
             End If
         End If
 
-        cargando = False ' Desbloqueamos eventos
+        cargando = False
         LlenarComboCalibre()
     End Sub
 
@@ -134,7 +253,6 @@ Public Class ucProcesoCalibrado
         LlenarComboCalibre()
     End Sub
 
-    ' 5. LÓGICA DEL COMBO CALIBRE
     Private Sub LlenarComboCalibre()
         cargando = True
         cmbCalibre.DataSource = Nothing
@@ -142,7 +260,7 @@ Public Class ucProcesoCalibrado
         If cmbVariedad.SelectedValue IsNot Nothing AndAlso IsNumeric(cmbVariedad.SelectedValue) Then
             Dim idVariedad As Integer = Convert.ToInt32(cmbVariedad.SelectedValue)
 
-            Dim sqlCalibre As String = "SELECT id,nombre FROM calibres WHERE variedades_id = @varId"
+            Dim sqlCalibre As String = "SELECT id, nombre FROM calibres WHERE variedades_id = @varId"
             Dim dtCalibres As DataTable = ObtenerDatos(sqlCalibre, {New MySqlParameter("@varId", idVariedad)})
 
             cmbCalibre.DisplayMember = "nombre"
@@ -158,10 +276,61 @@ Public Class ucProcesoCalibrado
         If cargando Then Return
     End Sub
 
-    ' 7. LÓGICA DE REGISTRO, IMPRESIÓN Y VALIDACIÓN
-    Private Sub btnRegistrar_Click(sender As Object, e As EventArgs) Handles btnRegistrar.Click
+    ' =========================================================================
+    ' ====================== BARRAS DE ACCIONES (CRUD) ========================
+    ' =========================================================================
 
-        ' --- VALIDACIÓN DE CAMPOS ---
+    Private Sub btnActualizar_Click(sender As Object, e As EventArgs) Handles btnActualizar.Click
+        If idContenedorEditar = 0 Then
+            MessageBox.Show("No se ha seleccionado ningún registro para actualizar.", "Atención", MessageBoxButtons.OK, MessageBoxIcon.Warning)
+            Return
+        End If
+
+        If cmbProducto.SelectedIndex = -1 OrElse cmbVariedad.SelectedIndex = -1 OrElse cmbCalibre.SelectedIndex = -1 Then
+            MessageBox.Show("Debe seleccionar Producto, Variedad y Calibre.", "Atención", MessageBoxButtons.OK, MessageBoxIcon.Warning)
+            Return
+        End If
+
+        Try
+            Dim sqlUpdate As String = "UPDATE contenedores SET " &
+                                      "productos_id = @prodId, " &
+                                      "variedades_id = @varId, " &
+                                      "calibres_id = @calId, " &
+                                      "updated_at = NOW() " &
+                                      "WHERE id = @idContenedor"
+
+            ConexionBD.Abrir()
+            Using cmd As New MySqlCommand(sqlUpdate, ConexionBD.conexion)
+                cmd.Parameters.AddWithValue("@prodId", cmbProducto.SelectedValue)
+                cmd.Parameters.AddWithValue("@varId", cmbVariedad.SelectedValue)
+                cmd.Parameters.AddWithValue("@calId", cmbCalibre.SelectedValue)
+                cmd.Parameters.AddWithValue("@idContenedor", idContenedorEditar)
+
+                Dim filasAfectadas As Integer = cmd.ExecuteNonQuery()
+
+                If filasAfectadas > 0 Then
+                    MessageBox.Show("Registro actualizado correctamente.", "Éxito", MessageBoxButtons.OK, MessageBoxIcon.Information)
+                    ImprimirTicket(idContenedorEditar)
+                Else
+                    MessageBox.Show("No se encontró el registro para actualizar.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error)
+                End If
+            End Using
+
+        Catch ex As Exception
+            MessageBox.Show("Error al actualizar el registro: " & ex.Message, "Error MySQL", MessageBoxButtons.OK, MessageBoxIcon.Error)
+        Finally
+            ConexionBD.Cerrar()
+        End Try
+
+        ConfigurarModoUI(esModoEdicion:=False)
+        CargarDGV()
+    End Sub
+
+    Private Sub btnCancelar_Click(sender As Object, e As EventArgs) Handles btnCancelar.Click
+        ConfigurarModoUI(esModoEdicion:=False)
+    End Sub
+
+    Private Sub btnRegistrar_Click(sender As Object, e As EventArgs) Handles btnRegistrar.Click
         Dim errorMensaje As String = ""
         If cmbProceso.SelectedValue Is Nothing OrElse cmbProceso.SelectedIndex = -1 Then errorMensaje &= "- Debe seleccionar un Proceso." & vbCrLf
         If cmbProducto.SelectedValue Is Nothing OrElse cmbProducto.SelectedIndex = -1 Then errorMensaje &= "- Debe seleccionar un Producto." & vbCrLf
@@ -173,27 +342,33 @@ Public Class ucProcesoCalibrado
             Return
         End If
 
-        ' --- PROCESO DE INSERCIÓN Y CAPTURA DEL ID ---
+        Dim idProceso As Integer = Convert.ToInt32(cmbProceso.SelectedValue)
+        Dim idProducto As Integer = Convert.ToInt32(cmbProducto.SelectedValue)
+        Dim idVariedad As Integer = Convert.ToInt32(cmbVariedad.SelectedValue)
+        Dim idCalibre As Integer = Convert.ToInt32(cmbCalibre.SelectedValue)
+
         Dim nuevoIdContenedor As Integer = 0
+
         Try
             ConexionBD.Abrir()
 
-            ' 1. Insertamos el contenedor y capturamos su nuevo ID con LAST_INSERT_ID()
             Dim sqlContenedor As String = "INSERT INTO contenedores (recepciones_id, productos_id, variedades_id, calibres_id, tipos_ubicaciones_id, estados_contenedores_id, fecha_registro, users_id_registro, estado, created_at, updated_at) " &
-                                          "SELECT recepciones_id, @prodId, @varId, @calId, 3, 4, NOW(), 1, 1, NOW(), NOW() FROM procesos WHERE id = @procId; " &
+                                          "SELECT pr.recepciones_id, @prodId, @varId, @calId, 3, 4, NOW(), 1, 1, NOW(), NOW() " &
+                                          "FROM procesos_recepciones pr " &
+                                          "JOIN contenedores c ON pr.recepciones_id = c.recepciones_id " &
+                                          "WHERE pr.procesos_id = @procId AND c.productos_id = @prodId AND c.variedades_id = @varId " &
+                                          "LIMIT 1; " &
                                           "SELECT LAST_INSERT_ID();"
 
             Using cmd As New MySqlCommand(sqlContenedor, ConexionBD.conexion)
-                cmd.Parameters.AddWithValue("@procId", cmbProceso.SelectedValue)
-                cmd.Parameters.AddWithValue("@prodId", cmbProducto.SelectedValue)
-                cmd.Parameters.AddWithValue("@varId", cmbVariedad.SelectedValue)
-                cmd.Parameters.AddWithValue("@calId", cmbCalibre.SelectedValue)
+                cmd.Parameters.AddWithValue("@procId", idProceso)
+                cmd.Parameters.AddWithValue("@prodId", idProducto)
+                cmd.Parameters.AddWithValue("@varId", idVariedad)
+                cmd.Parameters.AddWithValue("@calId", idCalibre)
 
-                ' ExecuteScalar nos devuelve el ID recién creado
                 nuevoIdContenedor = Convert.ToInt32(cmd.ExecuteScalar())
             End Using
 
-            ' 2. Insertamos el historial usando el ID capturado
             Dim sqlHistorial As String = "INSERT INTO contenedores_historial (tipos_movimientos_id, contenedores_id, tipos_ubicaciones_id, estados_contenedores_id, fecha_movimiento, users_id, estado, created_at, updated_at) " &
                                          "VALUES (1, @idCont, 3, 4, NOW(), 1, 1, NOW(), NOW());"
 
@@ -204,42 +379,12 @@ Public Class ucProcesoCalibrado
 
             ConexionBD.Cerrar()
 
-            ' --- OBTENER DATOS DE LA VISTA PARA IMPRESIÓN ---
-            ' Consultamos tu nueva vista usando el ID recién creado
-            Dim sqlVista As String = "SELECT * FROM vw_calibrado_detalles_resumen WHERE codigo = @id"
-            Dim dtTicket As DataTable = ObtenerDatos(sqlVista, {New MySqlParameter("@id", nuevoIdContenedor)})
-
-            If dtTicket.Rows.Count > 0 Then
-                Dim fila As DataRow = dtTicket.Rows(0)
-
-                ' Llenamos el diccionario exactamente con los datos de la vista
-                Dim datosTicket As New Dictionary(Of String, String) From {
-                    {"codigo", fila("codigo").ToString()},
-                    {"recepcion", fila("recepcion").ToString()},
-                    {"tipo", fila("tipo").ToString()},
-                    {"proceso", fila("proceso").ToString()},
-                    {"productor", fila("productor").ToString()},
-                    {"producto", fila("producto").ToString()},
-                    {"variedad", fila("variedad").ToString()},
-                    {"calibre", fila("calibre").ToString()},
-                    {"numero", fila("numero").ToString()},
-                    {"fecha", If(IsDBNull(fila("fecha")), DateTime.Now.ToString("dd/MM/yyyy"), Convert.ToDateTime(fila("fecha")).ToString("dd/MM/yyyy"))},
-                    {"hora", fila("hora").ToString()}
-                }
-
-                ' Mandamos a imprimir usando el nuevo diseño
-                Dim pd As New PrintDocument()
-                pd.DefaultPageSettings.PaperSize = New PaperSize("100x150", 394, 590)
-                pd.DefaultPageSettings.Margins = New Margins(0, 0, 0, 0)
-                AddHandler pd.PrintPage, Sub(s, ev)
-                                             DisenoTicketQR_Grande(ev, datosTicket)
-                                         End Sub
-                pd.Print()
-
-                'MessageBox.Show("Registro de calibración completado e impreso con éxito.", "Guardado", MessageBoxButtons.OK, MessageBoxIcon.Information)
+            If nuevoIdContenedor > 0 Then
+                ImprimirTicket(nuevoIdContenedor)
                 cmbCalibre.SelectedIndex = -1
+                CargarDGV()
             Else
-                MessageBox.Show("El registro se guardó, pero no se encontró en la vista para imprimir.", "Aviso", MessageBoxButtons.OK, MessageBoxIcon.Warning)
+                MessageBox.Show("No se pudo obtener el ID asignado al contenedor.", "Aviso", MessageBoxButtons.OK, MessageBoxIcon.Warning)
             End If
 
         Catch ex As Exception
@@ -247,6 +392,10 @@ Public Class ucProcesoCalibrado
             MessageBox.Show("Error al guardar/imprimir: " & ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error)
         End Try
     End Sub
+
+    ' =========================================================================
+    ' ====================== MÉTODOS DE IMPRESIÓN =============================
+    ' =========================================================================
 
     ' =========================================================================
     ' ====================== MÉTODOS DE IMPRESIÓN =============================
@@ -268,91 +417,201 @@ Public Class ucProcesoCalibrado
         End Try
     End Function
 
-    ' --- DISEÑO DEL TICKET QR GIGANTE (100mm x 150mm) ---
     Private Sub DisenoTicketQR_Grande(e As PrintPageEventArgs, datos As Dictionary(Of String, String))
         Dim anchoPapel As Integer = 394
         Dim x As Integer = 20
-        Dim y As Integer = 20
+        Dim y As Integer = 8 ' Posición superior máxima
 
-        Using fCalibreNumero As New Font("Arial", 38, FontStyle.Bold),
-          fCalibreLabel As New Font("Arial", 8, FontStyle.Bold),
-          fDatosLabel As New Font("Arial", 11, FontStyle.Bold),
-          fDatosValor As New Font("Arial", 11),
-          fTimestamp As New Font("Arial", 9, FontStyle.Italic)
+        ' Fuentes ajustadas con Calibre en tamaño ultra gigante (110pt)
+        Using fTitulo As New Font("Arial", 11, FontStyle.Bold),
+              fCalibreGrande As New Font("Arial", 110, FontStyle.Bold), ' Calibre ultra gigante
+              fMedium As New Font("Arial", 24, FontStyle.Bold),        ' Fecha y Responsable
+              fDatosLabel As New Font("Arial", 9, FontStyle.Bold),
+              fDatosValor As New Font("Arial", 9),
+              fTimestamp As New Font("Arial", 8, FontStyle.Italic)
 
             Dim codigoBin As String = datos("codigo")
 
-            ' 1. CÓDIGO QR GIGANTE A LA IZQUIERDA (220x220 px)
-            Dim tamQR As Integer = 220
-            Dim escritorQR As New ZXing.BarcodeWriter With {
-            .Format = ZXing.BarcodeFormat.QR_CODE
-        }
-            escritorQR.Options = New ZXing.QrCode.QrCodeEncodingOptions With {
-            .Height = tamQR,
-            .Width = tamQR,
-            .Margin = 0
-        }
-            Using bmpQR As Bitmap = escritorQR.Write(codigoBin)
-                If bmpQR IsNot Nothing Then
-                    e.Graphics.DrawImage(bmpQR, x, y, tamQR, tamQR)
+            ' -----------------------------------------------------------------
+            ' 1. LOGO DE LA EMPRESA (COMPACTO)
+            ' -----------------------------------------------------------------
+            Dim imagenCargada As Boolean = False
+            Try
+                Dim imgLogo As Image = My.Resources.logo
+                If imgLogo IsNot Nothing Then
+                    Dim anchoImg As Integer = 140
+                    Dim altoImg As Integer = 42
+                    Dim xImg As Single = (anchoPapel - anchoImg) / 2
+
+                    e.Graphics.DrawImage(imgLogo, xImg, CSng(y), CSng(anchoImg), CSng(altoImg))
+                    y += altoImg + 4
+                    imagenCargada = True
                 End If
-            End Using
+            Catch
+                imagenCargada = False
+            End Try
 
-            ' 2. RECUADRO DE CALIBRE (NÚMERO) A LA DERECHA
-            Dim numCalibre As String = datos("numero")
-            Dim recCalibre As New Rectangle(anchoPapel - 100, y, 80, 75)
-            e.Graphics.DrawRectangle(Pens.Black, recCalibre)
+            If Not imagenCargada Then
+                Dim titulo As String = "PALTAS EL CHEJO"
+                Dim tamTitulo = e.Graphics.MeasureString(titulo, fTitulo)
+                Dim xTitulo As Single = (anchoPapel - tamTitulo.Width) / 2
+                e.Graphics.DrawString(titulo, fTitulo, Brushes.Black, xTitulo, CSng(y))
+                y += CInt(tamTitulo.Height) + 4
+            End If
 
-            Dim tamCalLabel = e.Graphics.MeasureString("CALIBRE", fCalibreLabel)
-            e.Graphics.DrawString("CALIBRE", fCalibreLabel, Brushes.Black, recCalibre.X + (80 - tamCalLabel.Width) / 2, recCalibre.Y + 4)
-
-            Dim tamCalNum = e.Graphics.MeasureString(numCalibre, fCalibreNumero)
-            e.Graphics.DrawString(numCalibre, fCalibreNumero, Brushes.Black, recCalibre.X + (80 - tamCalNum.Width) / 2, recCalibre.Y + 18)
-
-            ' Avanzamos Y justo debajo del QR
-            y += tamQR + 10
-
-            ' LÍNEA SEPARADORA
             e.Graphics.DrawLine(Pens.Black, x, y, anchoPapel - x, y)
-            y += 10
+            y += 4
 
-            ' 3. LISTA DE DATOS SOLICITADOS
+            ' -----------------------------------------------------------------
+            ' 2. CALIBRE ULTRA GIGANTE (110pt)
+            ' -----------------------------------------------------------------
+            Dim nombreCalibre As String = datos("calibre")
+
+            Dim tamCalNum = e.Graphics.MeasureString(nombreCalibre, fCalibreGrande)
+            e.Graphics.DrawString(nombreCalibre, fCalibreGrande, Brushes.Black, (anchoPapel - tamCalNum.Width) / 2, CSng(y))
+            y += CInt(tamCalNum.Height) + 2
+
+            ' -----------------------------------------------------------------
+            ' 3. FECHA Y PERSONA (DESTACADOS)
+            ' -----------------------------------------------------------------
+            Dim textoFecha As String = $"FECHA: {datos("fecha")}"
+            Dim tamFecha = e.Graphics.MeasureString(textoFecha, fMedium)
+            e.Graphics.DrawString(textoFecha, fMedium, Brushes.Black, (anchoPapel - tamFecha.Width) / 2, CSng(y))
+            y += CInt(tamFecha.Height) + 2
+
+            Dim nombrePersona As String = datos("productor")
+            If Not String.IsNullOrEmpty(nombrePersona) Then
+                Dim textoPersona As String = $"RESP: {nombrePersona}"
+                Dim tamPersona = e.Graphics.MeasureString(textoPersona, fMedium)
+                e.Graphics.DrawString(textoPersona, fMedium, Brushes.Black, (anchoPapel - tamPersona.Width) / 2, CSng(y))
+                y += CInt(tamPersona.Height) + 8
+            Else
+                y += 6
+            End If
+
+            e.Graphics.DrawLine(Pens.Black, x, y, anchoPapel - x, y)
+            y += 8
+
+            ' -----------------------------------------------------------------
+            ' 4. DATOS NORMALES EN PEQUEÑO
+            ' -----------------------------------------------------------------
             Dim lineasDatos As New Dictionary(Of String, String) From {
-            {"Código ID:", codigoBin},
-            {"Recepción:", datos("recepcion")},
-            {"Tipo:", datos("tipo")},
-            {"Proceso:", datos("proceso")}, ' <--- AQUÍ SE AGREGÓ EL PROCESO
-            {"Productor:", datos("productor")},
-            {"Producto:", datos("producto")},
-            {"Variedad:", datos("variedad")},
-            {"Calibre:", datos("calibre")}
-        }
+                {"Código ID:", codigoBin},
+                {"Recepción:", datos("recepcion")},
+                {"Tipo:", datos("tipo")},
+                {"Proceso:", datos("proceso")},
+                {"Producto:", datos("producto")},
+                {"Variedad:", datos("variedad")},
+                {"N° Calibre:", datos("numero")}
+            }
 
-            Dim posXValor As Integer = 120 ' Tabulación para que los valores queden alineados
+            Dim posXValor As Integer = 120
             For Each item In lineasDatos
-                e.Graphics.DrawString(item.Key, fDatosLabel, Brushes.Black, x, y)
-                e.Graphics.DrawString(item.Value, fDatosValor, Brushes.Black, posXValor, y)
-                y += 24 ' Espaciado entre lineas
+                e.Graphics.DrawString(item.Key, fDatosLabel, Brushes.Black, x, CSng(y))
+                e.Graphics.DrawString(item.Value, fDatosValor, Brushes.Black, posXValor, CSng(y))
+                y += 17
             Next
 
-            ' LÍNEA SEPARADORA
-            y += 5
-            e.Graphics.DrawLine(Pens.Gray, x, y, anchoPapel - x, y)
-            y += 10
+            y += 6
 
-            ' 4. CÓDIGO DE BARRAS INFERIOR
+            ' -----------------------------------------------------------------
+            ' 5. CÓDIGO DE BARRAS INFERIOR
+            ' -----------------------------------------------------------------
             Using bmpBarcode As Bitmap = GenerarImagenBarcode(codigoBin)
                 If bmpBarcode IsNot Nothing Then
                     Dim anchoBarcode As Integer = anchoPapel - (x * 2)
-                    ' Reducimos la altura del barcode a 60px para optimizar el espacio inferior
-                    e.Graphics.DrawImage(bmpBarcode, x, y, anchoBarcode, 60)
-                    y += 65
+                    Dim altoBarcode As Integer = 55
+                    e.Graphics.DrawImage(bmpBarcode, x, y, anchoBarcode, altoBarcode)
+                    y += altoBarcode + 6
                 End If
             End Using
 
-            ' 5. FECHA Y HORA AL FINAL
-            e.Graphics.DrawString($"Fecha: {datos("fecha")} {datos("hora")}", fTimestamp, Brushes.Black, x, y)
+            ' -----------------------------------------------------------------
+            ' 6. TIMBRE DE FECHA DE REGISTRO
+            ' -----------------------------------------------------------------
+            e.Graphics.DrawLine(Pens.Gray, x, y, anchoPapel - x, y)
+            y += 3
+
+            Dim textoTimbre As String = $"REGISTRO: {datos("fecha")} {datos("hora")}"
+            Dim tamTimbre = e.Graphics.MeasureString(textoTimbre, fTimestamp)
+            e.Graphics.DrawString(textoTimbre, fTimestamp, Brushes.Black, (anchoPapel - tamTimbre.Width) / 2, CSng(y))
+
         End Using
+    End Sub
+
+    Private Sub ImprimirTicket(idContenedor As Integer)
+        Try
+            Dim sqlVista As String =
+                "SELECT " &
+                "    a.id AS codigo, " &
+                "    a.recepciones_id AS recepcion, " &
+                "    j.tipo AS tipo, " &
+                "    k.id AS proceso, " &
+                "    h.nombre AS productor, " &
+                "    b.nombre AS producto, " &
+                "    c.nombre AS variedad, " &
+                "    a.kilos_brutos AS bruto, " &
+                "    a.kilos_netos AS neto, " &
+                "    a.ciclo AS ciclo, " &
+                "    g.prefijo AS prefijo, " &
+                "    i.nombre AS calibre, " &
+                "    i.numero AS numero, " &
+                "    a.estados_contenedores_id AS estados_contenedores_id, " &
+                "    a.fecha_registro AS fecha, " &
+                "    a.hora_registro AS hora, " &
+                "    f.nombre AS estado " &
+                "FROM contenedores a " &
+                "JOIN productos b ON a.productos_id = b.id " &
+                "JOIN variedades c ON a.variedades_id = c.id " &
+                "JOIN recepciones e ON a.recepciones_id = e.id " &
+                "JOIN estados_contenedores f ON a.estados_contenedores_id = f.id " &
+                "LEFT JOIN fases_sistema g ON f.fases_sistema_id = g.id " &
+                "JOIN personas h ON e.personas_id = h.id " &
+                "JOIN calibres i ON a.calibres_id = i.id " &
+                "JOIN tipos_recepciones j ON e.tipos_recepciones_id = j.id " &
+                "JOIN procesos_recepciones pr ON e.id = pr.recepciones_id " &
+                "LEFT JOIN procesos k ON pr.procesos_id = k.id " &
+                "WHERE a.id = @id " &
+                "ORDER BY a.id DESC"
+
+            Dim dtTicket As DataTable = ObtenerDatos(sqlVista, {New MySqlParameter("@id", idContenedor)})
+
+            If dtTicket.Rows.Count > 0 Then
+                Dim fila As DataRow = dtTicket.Rows(0)
+                Dim datosTicket As New Dictionary(Of String, String) From {
+                    {"codigo", fila("codigo").ToString()},
+                    {"recepcion", fila("recepcion").ToString()},
+                    {"tipo", fila("tipo").ToString()},
+                    {"proceso", fila("proceso").ToString()},
+                    {"productor", fila("productor").ToString()},
+                    {"producto", fila("producto").ToString()},
+                    {"variedad", fila("variedad").ToString()},
+                    {"calibre", fila("calibre").ToString()},
+                    {"numero", fila("numero").ToString()},
+                    {"fecha", If(IsDBNull(fila("fecha")), DateTime.Now.ToString("dd/MM/yyyy"), Convert.ToDateTime(fila("fecha")).ToString("dd/MM/yyyy"))},
+                    {"hora", fila("hora").ToString()}
+                }
+
+                Dim pd As New PrintDocument()
+                pd.PrinterSettings.PrinterName = "Xprinter XP-420B"
+
+                If Not pd.PrinterSettings.IsValid Then
+                    MessageBox.Show("La impresora '" & pd.PrinterSettings.PrinterName & "' no es válida, no está conectada o el nombre es incorrecto.", "Error de Impresora", MessageBoxButtons.OK, MessageBoxIcon.Error)
+                    Return
+                End If
+
+                pd.DefaultPageSettings.PaperSize = New PaperSize("100x150", 394, 590)
+                pd.DefaultPageSettings.Margins = New Margins(0, 0, 0, 0)
+                AddHandler pd.PrintPage, Sub(s, ev)
+                                             DisenoTicketQR_Grande(ev, datosTicket)
+                                         End Sub
+                pd.Print()
+            Else
+                MessageBox.Show("No se encontró la información en la vista para imprimir.", "Aviso", MessageBoxButtons.OK, MessageBoxIcon.Warning)
+            End If
+        Catch ex As Exception
+            MessageBox.Show("Error al imprimir: " & ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error)
+        End Try
     End Sub
 
 End Class

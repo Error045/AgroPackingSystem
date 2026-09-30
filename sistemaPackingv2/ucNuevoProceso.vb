@@ -2,98 +2,124 @@
 Imports MySql.Data.MySqlClient
 Imports Mysqlx.Cursor
 
-
-
 Public Class ucNuevoProceso
 
+    Private dtRecepciones As DataTable
 
-	Private _idRecepcion As Integer
-	' Variable de respaldo para el ID
-	Private _idRecepcionSeleccionada As Integer = 0
+    Private Sub ucNuevoProceso_Load(sender As Object, e As EventArgs) Handles MyBase.Load
+        ' 1. Configurar las columnas del DataGridView manualmente
+        ConfigurarDataGridView()
 
+        ' 2. Cargar los datos en el ComboBox usando tu consulta SQL
+        ' Se agregó CONCAT para mostrar "N° ID - Nombre" en el combobox
+        ' Se agregó c.nombre al GROUP BY para evitar errores de sintaxis en MySQL
+        Dim sql As String = "SELECT a.id, CONCAT('N° ', a.id, ' - ', c.nombre) AS display_name, " &
+                            "d.tipo, c.nombre AS persona, count(b.id) AS contenedores, " &
+                            "sum(b.kilos_brutos) AS kilos_brutos, sum(b.kilos_netos) AS kilos_netos " &
+                            "FROM recepciones a " &
+                            "INNER JOIN contenedores b ON a.id = b.recepciones_id " &
+                            "INNER JOIN personas c ON a.personas_id = c.id " &
+                            "INNER JOIN tipos_recepciones d ON a.tipos_recepciones_id = d.id " &
+                            "WHERE a.estados_recepciones_id = 2 " &
+                            "GROUP BY a.id, d.tipo, c.nombre;"
 
-	Private Sub ucNuevoProceso_Load(sender As Object, e As EventArgs) Handles MyBase.Load
+        dtRecepciones = ObtenerDatos(sql)
 
-		'cargar los datos de las recepciones que están en estado "Finalizada" para mostrarlos en el combo box
-		Dim sqlRecepcionEstado As String = "SELECT id_recepcion,nombre FROM vw_recepciones_estados  WHERE estados_recepciones_id = 2 "
-		Dim dtRecepcionEstado As DataTable = ObtenerDatos(sqlRecepcionEstado)
+        ' 3. Llenar el ComboBox
+        cmbRecepciones.DataSource = dtRecepciones
+        cmbRecepciones.DisplayMember = "display_name"
+        cmbRecepciones.ValueMember = "id"
+        cmbRecepciones.SelectedIndex = -1
+    End Sub
 
+    Private Sub ConfigurarDataGridView()
+        dgvRecepciones.Columns.Clear()
+        dgvRecepciones.AllowUserToAddRows = False
+        dgvRecepciones.SelectionMode = DataGridViewSelectionMode.FullRowSelect
+        dgvRecepciones.ReadOnly = True ' Evitar que el usuario edite las celdas a mano
 
-		' Desvinculamos el evento temporalmente para evitar que limpie el label al cargar
-		RemoveHandler cmbRecepcionEstado.SelectedIndexChanged, AddressOf cmbRecepcionEstado_SelectedIndexChanged
+        dgvRecepciones.Columns.Add("id", "N° Recepción")
+        dgvRecepciones.Columns.Add("tipo", "Tipo")
+        dgvRecepciones.Columns.Add("persona", "Productor/Persona")
+        dgvRecepciones.Columns.Add("contenedores", "Contenedores")
+        dgvRecepciones.Columns.Add("kilos_brutos", "Kilos Brutos")
+        dgvRecepciones.Columns.Add("kilos_netos", "Kilos Netos")
+    End Sub
 
-		cmbRecepcionEstado.DataSource = dtRecepcionEstado
-		cmbRecepcionEstado.DisplayMember = "nombre"
-		cmbRecepcionEstado.ValueMember = "id_recepcion"
-		cmbRecepcionEstado.SelectedIndex = -1
+    ' =======================================================
+    ' EVENTO: AGREGAR AL DATAGRIDVIEW
+    ' =======================================================
+    Private Sub btnAgregar_Click(sender As Object, e As EventArgs) Handles btnAgregar.Click
+        ' Validar que haya algo seleccionado
+        If cmbRecepciones.SelectedIndex = -1 Then
+            MessageBox.Show("Seleccione una recepción de la lista.", "Aviso", MessageBoxButtons.OK, MessageBoxIcon.Information)
+            Return
+        End If
 
-		lblIdRecepcion.Text = ""
-		_idRecepcionSeleccionada = 0
+        ' Obtener la fila de datos seleccionada en el ComboBox
+        Dim filaSeleccionada As DataRowView = DirectCast(cmbRecepciones.SelectedItem, DataRowView)
+        Dim idRecepcion As Integer = Convert.ToInt32(filaSeleccionada("id"))
 
-		' Volvemos a vincular el evento
-		AddHandler cmbRecepcionEstado.SelectedIndexChanged, AddressOf cmbRecepcionEstado_SelectedIndexChanged
+        ' Validar que no se haya agregado ya al DataGridView
+        For Each row As DataGridViewRow In dgvRecepciones.Rows
+            If Convert.ToInt32(row.Cells("id").Value) = idRecepcion Then
+                MessageBox.Show("Esta recepción ya fue agregada a la lista.", "Aviso", MessageBoxButtons.OK, MessageBoxIcon.Warning)
+                Return
+            End If
+        Next
 
-		' 2. Evento que detecta el cambio y actualiza el Label y la Variable
+        ' Agregar los datos al DataGridView
+        dgvRecepciones.Rows.Add(
+            idRecepcion,
+            filaSeleccionada("tipo").ToString(),
+            filaSeleccionada("persona").ToString(),
+            filaSeleccionada("contenedores").ToString(),
+            filaSeleccionada("kilos_brutos").ToString(),
+            filaSeleccionada("kilos_netos").ToString()
+        )
 
-	End Sub
+        ' Opcional: Limpiar la selección del combo tras agregar
+        cmbRecepciones.SelectedIndex = -1
+    End Sub
 
-	Private Sub cmbRecepcionEstado_SelectedIndexChanged(sender As Object, e As EventArgs) Handles cmbRecepcionEstado.SelectedIndexChanged
-		' Validamos que haya una selección real
-		If cmbRecepcionEstado.SelectedIndex <> -1 AndAlso cmbRecepcionEstado.SelectedValue IsNot Nothing Then
+    ' =======================================================
+    ' EVENTO: QUITAR DEL DATAGRIDVIEW
+    ' =======================================================
+    Private Sub btnQuitar_Click(sender As Object, e As EventArgs) Handles btnQuitar.Click
+        If dgvRecepciones.SelectedRows.Count > 0 Then
+            ' Eliminar la fila seleccionada
+            dgvRecepciones.Rows.Remove(dgvRecepciones.SelectedRows(0))
+        Else
+            MessageBox.Show("Seleccione una fila en la grilla para quitarla.", "Aviso", MessageBoxButtons.OK, MessageBoxIcon.Information)
+        End If
+    End Sub
 
-			' Intentamos obtener el ID (manejando si es DataRowView o el valor directo)
-			Dim idTmp As String = cmbRecepcionEstado.SelectedValue.ToString()
-
-			' Actualizamos el Label (Funcionalidad recuperada)
-			lblIdRecepcion.Text = idTmp
-
-			' Actualizamos la variable para el botón Terminar
-			Integer.TryParse(idTmp, _idRecepcionSeleccionada)
-		Else
-			lblIdRecepcion.Text = ""
-			_idRecepcionSeleccionada = 0
-		End If
-	End Sub
-
-	Private Sub btnRegistrar_Click(sender As Object, e As EventArgs) Handles btnRegistrar.Click
+    ' =======================================================
+    ' EVENTO: REGISTRAR (TRANSACCIÓN DB)
+    ' =======================================================
+    Private Sub btnRegistrar_Click(sender As Object, e As EventArgs) Handles btnRegistrar.Click
+        ' 1. Validación: Que haya al menos una recepción en la grilla
+        If dgvRecepciones.Rows.Count = 0 Then
+            MessageBox.Show("Debe agregar al menos una recepción a la lista antes de registrar.", "Validación", MessageBoxButtons.OK, MessageBoxIcon.Exclamation)
+            Return
+        End If
 
         Try
             ConexionBD.Abrir()
-
-            ' 1. Definimos la consulta (obtenemos el número de registros abiertos)
             Dim sqlValidacion As String = "SELECT COUNT(*) FROM procesos WHERE estados_procesos_id = 1"
-
-            ' 2. Ejecutamos y convertimos el resultado a Entero
-            ' Usamos ExecuteScalar (o tu método equivalente) para obtener el conteo
             Dim conteoAbiertas As Integer = Convert.ToInt32(ConexionBD.EjecutarEscalar(sqlValidacion))
 
-            ' 3. Validación de Negocio
             If conteoAbiertas > 0 Then
-                MessageBox.Show("Existe un Proceso 'Abierto'. Debe cerrarlo antes de continuar.",
-                        "Validación", MessageBoxButtons.OK, MessageBoxIcon.Warning)
-                Return ' Detiene la ejecución si hay una abierta
-            End If
-
-            ' 4. Validación de Interfaz (Campos vacíos)
-            If String.IsNullOrEmpty(cmbRecepcionEstado.SelectedValue) Then
-                MessageBox.Show("Por favor, seleccione el Tipo de Recepción y la Persona.",
-                        "Campos Requeridos", MessageBoxButtons.OK, MessageBoxIcon.Exclamation)
+                MessageBox.Show("Existe un Proceso 'Abierto'. Debe cerrarlo antes de continuar.", "Validación", MessageBoxButtons.OK, MessageBoxIcon.Warning)
                 Return
             End If
-
         Catch ex As Exception
-            MessageBox.Show("Error al validar recepción: " & ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error)
+            MessageBox.Show("Error al validar procesos abiertos: " & ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error)
+            Return
         Finally
-            ConexionBD.Cerrar() ' Siempre cerrar la conexión, ocurra error o no
+            ConexionBD.Cerrar()
         End Try
 
-        'valida datos en comboboxs
-        'If cmbTipoRecepcion.SelectedValue Is Nothing Or cmbPersona.SelectedValue Is Nothing Then
-        'MessageBox.Show("Por favor, seleccione el Tipo de Recepción y la Persona.", "Validación", MessageBoxButtons.OK, MessageBoxIcon.Warning)
-        'Return
-        ' End If
-
-        ' 2. BLOQUEO DE BOTÓN: Evita duplicados por doble click
         btnRegistrar.Enabled = False
         btnRegistrar.Text = "Procesando..."
 
@@ -104,61 +130,61 @@ Public Class ucNuevoProceso
             ConexionBD.Abrir()
             Using transaccion = ConexionBD.conexion.BeginTransaction()
                 Try
-                    ' Eliminamos el SELECT intermedio y dejamos el LAST_INSERT_ID() al final de todo el bloque
-
-                    Dim sql As String =
-"INSERT INTO procesos (recepciones_id, fecha, hora, estados_procesos_id, users_id, created_at, updated_at) " &  'INSERTA NUEVO PROCESO
-    "VALUES (@recepcionesId, CURDATE(), CURTIME(), 1, 1, NOW(), NOW()); " &
-    "SET @idProceso = LAST_INSERT_ID(); " &
-    "UPDATE recepciones " &
-    "SET estados_recepciones_id = 3, updated_at = NOW() " &
-    "WHERE id = @recepcionesId; " &
-    "UPDATE contenedores " &                     '--- AQUÍ ESTÁ EL UPDATE DE LOS CONTENEDORES estados_contenedores_id = 2 (En proceso) ---
-    "SET estados_contenedores_id = 2 " &
-    "WHERE recepciones_id = @recepcionesId; " &
-    "INSERT INTO contenedores_historial (" &    ' --- AQUÍ ESTÁ EL INSERT AL HISTORIAL tipos_movimientos = 2 , estados_contenedores_id = 2 y tipos_ubicaciones = 1, fecha_movimiento --- ubicacion = 1 porque el operador de grua modifica la ubicación del contenedor a 2 'En patio proceso' ---
-    "tipos_movimientos_id, tipos_contenedores_id, contenedores_id, " &
-    "tipos_ubicaciones_id, estados_contenedores_id, kilos_brutos, kilos_netos, " &
-    "fecha_movimiento, users_id) " &
-    "SELECT " &
-    "2, tipos_contenedores_id, id, " &
-    "1 , 2, kilos_brutos, kilos_netos, " &
-    "NOW(), users_id_registro " &
-    "FROM contenedores " &
-    "WHERE recepciones_id = @recepcionesId; " &
-    "SELECT @idProceso;" ' Esto es lo que devolverá el ExecuteScalar
+                    ' PASO A: CREAR EL PROCESO
+                    Dim sqlProceso As String = "INSERT INTO procesos (fecha, hora, estados_procesos_id, users_id, created_at, updated_at) " &
+                                               "VALUES (CURDATE(), CURTIME(), 1, 1, NOW(), NOW()); " &
+                                               "SELECT LAST_INSERT_ID();"
 
                     Dim nuevoIdProceso As Integer
-                    Using cmd As New MySqlCommand(sql, ConexionBD.conexion, transaccion)
-                        ' Importante: Asegúrate que cmbRecepcionEstado.SelectedValue no sea nulo
-                        cmd.Parameters.AddWithValue("@recepcionesId", cmbRecepcionEstado.SelectedValue)
+                    Using cmdProceso As New MySqlCommand(sqlProceso, ConexionBD.conexion, transaccion)
+                        nuevoIdProceso = Convert.ToInt32(cmdProceso.ExecuteScalar())
+                    End Using
 
-                        ' Ejecutamos y obtenemos el ID final
-                        nuevoIdProceso = Convert.ToInt32(cmd.ExecuteScalar())
+                    ' PASO B: ITERAR POR CADA FILA DEL DATAGRIDVIEW
+                    Dim sqlDetalle As String =
+                        "INSERT INTO procesos_recepciones (procesos_id, recepciones_id, created_at, updated_at) " &
+                        "VALUES (@idProceso, @idRecepcion, NOW(), NOW()); " &
+                        "UPDATE recepciones SET estados_recepciones_id = 3, updated_at = NOW() WHERE id = @idRecepcion; " &
+                        "UPDATE contenedores SET estados_contenedores_id = 2 WHERE recepciones_id = @idRecepcion; " &
+                        "INSERT INTO contenedores_historial (tipos_movimientos_id, tipos_contenedores_id, contenedores_id, " &
+                        "tipos_ubicaciones_id, estados_contenedores_id, kilos_brutos, kilos_netos, fecha_movimiento, users_id) " &
+                        "SELECT 2, tipos_contenedores_id, id, 1, 2, kilos_brutos, kilos_netos, NOW(), users_id_registro " &
+                        "FROM contenedores WHERE recepciones_id = @idRecepcion;"
+
+                    Using cmdDetalle As New MySqlCommand(sqlDetalle, ConexionBD.conexion, transaccion)
+                        cmdDetalle.Parameters.Add("@idProceso", MySqlDbType.Int32).Value = nuevoIdProceso
+                        cmdDetalle.Parameters.Add("@idRecepcion", MySqlDbType.Int32)
+
+                        ' Recorremos las filas del DataGridView
+                        For Each row As DataGridViewRow In dgvRecepciones.Rows
+                            Dim idRecepcionFila As Integer = Convert.ToInt32(row.Cells("id").Value)
+
+                            cmdDetalle.Parameters("@idRecepcion").Value = idRecepcionFila
+                            cmdDetalle.ExecuteNonQuery()
+                        Next
                     End Using
 
                     transaccion.Commit()
-                    MessageBox.Show($"¡Proceso N° {nuevoIdProceso} creado con éxito!", "Éxito", MessageBoxButtons.OK, MessageBoxIcon.Information)
+                    MessageBox.Show($"¡Proceso N° {nuevoIdProceso} creado con éxito y asociado a {dgvRecepciones.Rows.Count} recepción(es)!", "Éxito", MessageBoxButtons.OK, MessageBoxIcon.Information)
 
-                    ' Actualización de UI
                     If frm IsNot Nothing Then
                         frm.IdRecepcionGlobal = nuevoIdProceso.ToString()
                     End If
 
+                    ' Limpiar todo para un nuevo ingreso
+                    dgvRecepciones.Rows.Clear()
+
                 Catch ex As Exception
                     transaccion.Rollback()
-                    btnRegistrar.Enabled = True
-                    btnRegistrar.Text = "Registrar"
-                    MessageBox.Show("Error en la transacción: " & ex.Message)
+                    MessageBox.Show("Error en la transacción DB: " & ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error)
                 End Try
             End Using
         Catch ex As Exception
-            MessageBox.Show("Error de conexión: " & ex.Message)
+            MessageBox.Show("Error de conexión: " & ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error)
         Finally
             ConexionBD.Cerrar()
+            btnRegistrar.Enabled = True
+            btnRegistrar.Text = "Registrar"
         End Try
     End Sub
-
-
-
 End Class

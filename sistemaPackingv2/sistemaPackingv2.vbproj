@@ -15,7 +15,7 @@
     <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
     <Deterministic>true</Deterministic>
     <IsWebBootstrapper>false</IsWebBootstrapper>
-    <PublishUrl>D:\Proyectos_sistemas\02_Visual_basic\version Instalable4\</PublishUrl>
+    <PublishUrl>D:\Proyectos_sistemas\02_Visual_basic\version Instalable5\</PublishUrl>
     <Install>true</Install>
     <InstallFrom>Disk</InstallFrom>
     <UpdateEnabled>false</UpdateEnabled>
@@ -25,7 +25,7 @@
     <UpdatePeriodically>false</UpdatePeriodically>
     <UpdateRequired>false</UpdateRequired>
     <MapFileExtensions>true</MapFileExtensions>
-    <ApplicationRevision>22</ApplicationRevision>
+    <ApplicationRevision>24</ApplicationRevision>
     <ApplicationVersion>1.0.0.%2a</ApplicationVersion>
     <UseApplicationTrust>false</UseApplicationTrust>
     <PublishWizardCompleted>true</PublishWizardCompleted>
@@ -258,10 +258,22 @@
     <Compile Include="ucDashboardPallet.vb">
       <SubType>UserControl</SubType>
     </Compile>
+    <Compile Include="ucEditarProceso.Designer.vb">
+      <DependentUpon>ucEditarProceso.vb</DependentUpon>
+    </Compile>
+    <Compile Include="ucEditarProceso.vb">
+      <SubType>UserControl</SubType>
+    </Compile>
     <Compile Include="ucEditarRecepcion.Designer.vb">
       <DependentUpon>ucEditarRecepcion.vb</DependentUpon>
     </Compile>
     <Compile Include="ucEditarRecepcion.vb">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="ucMostrarProcesoCalibrado.Designer.vb">
+      <DependentUpon>ucMostrarProcesoCalibrado.vb</DependentUpon>
+    </Compile>
+    <Compile Include="ucMostrarProcesoCalibrado.vb">
       <SubType>UserControl</SubType>
     </Compile>
     <Compile Include="ucNuevaRecepcion.Designer.vb">
@@ -533,8 +545,14 @@
     <EmbeddedResource Include="ucDashboardPallet.resx">
       <DependentUpon>ucDashboardPallet.vb</DependentUpon>
     </EmbeddedResource>
+    <EmbeddedResource Include="ucEditarProceso.resx">
+      <DependentUpon>ucEditarProceso.vb</DependentUpon>
+    </EmbeddedResource>
     <EmbeddedResource Include="ucEditarRecepcion.resx">
       <DependentUpon>ucEditarRecepcion.vb</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="ucMostrarProcesoCalibrado.resx">
+      <DependentUpon>ucMostrarProcesoCalibrado.vb</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="ucNuevaRecepcion.resx">
       <DependentUpon>ucNuevaRecepcion.vb</DependentUpon>

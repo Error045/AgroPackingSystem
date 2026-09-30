@@ -468,10 +468,10 @@ Public Class Form1
         ' 1. Limpiamos el panel central
         pnlContenedor.Controls.Clear()
         ' 2. Instanciamos el UserControl Maestro (tu sala de espera con el DataGridView)
-        Dim ucDespachoServicio As New ucDespachoServicio()
+        ' Dim ucEtiquetasCalibre As New ucEtiquetasCalibre()
         'vistaPaletizado se encargará de buscar en la BD al cargarse.
-        ucDespachoServicio.Dock = DockStyle.Fill
-        pnlContenedor.Controls.Add(ucDespachoServicio)
+        ' ucEtiquetasCalibre.Dock = DockStyle.Fill
+        'pnlContenedor.Controls.Add(ucEtiquetasCalibre)
 
     End Sub
 End Class

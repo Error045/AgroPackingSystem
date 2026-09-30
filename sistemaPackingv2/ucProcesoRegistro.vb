@@ -4,17 +4,17 @@ Public Class ucProcesoRegistro
     Private _idProceso As Integer
     ' Variables de estado
     Private idDetalleValidado As Integer = 0
-    Private procesoIdActual As Integer = _idProceso
-    Private columnaBotonAgregada As Boolean = False
+    Private procesoIdActual As Integer = 0
+
     Public Sub New(idProceso As Integer)
         InitializeComponent()
-		_idProceso = idProceso
+        _idProceso = idProceso
         procesoIdActual = idProceso
     End Sub
 
-
-
-    ' --- CARGA INICIAL ---
+    ' =====================================================================
+    ' 1. CARGA INICIAL
+    ' =====================================================================
     Private Sub ucProcesoRegistros_Load(sender As Object, e As EventArgs) Handles MyBase.Load
         CargarHistorialFull()
         btnProcesar.Enabled = False ' Aseguramos que inicie apagado
@@ -22,15 +22,15 @@ Public Class ucProcesoRegistro
     End Sub
 
     Private Sub dgvHistorico_RowPrePaint(sender As Object, e As DataGridViewRowPrePaintEventArgs) Handles dgvHistorico.RowPrePaint
-        ' 1. Validamos que el índice sea correcto y no sea la fila vacía del final
+        ' Validamos que el índice sea correcto y no sea la fila vacía del final
         If e.RowIndex >= 0 AndAlso Not dgvHistorico.Rows(e.RowIndex).IsNewRow Then
             Dim row As DataGridViewRow = dgvHistorico.Rows(e.RowIndex)
 
-            ' 2. Validamos que la celda "Estado" tenga datos
+            ' Validamos que la celda "Estado" tenga datos
             If row.Cells("Estado").Value IsNot DBNull.Value AndAlso row.Cells("Estado").Value IsNot Nothing Then
                 Dim estadoActual As String = row.Cells("Estado").Value.ToString()
 
-                ' 3. Aplicamos el color correspondiente
+                ' Aplicamos el color correspondiente
                 If estadoActual.Equals("Procesado", StringComparison.OrdinalIgnoreCase) Then
                     row.DefaultCellStyle.BackColor = Color.LightGreen
                 Else
@@ -40,44 +40,34 @@ Public Class ucProcesoRegistro
         End If
     End Sub
 
-    ' --- MÉTODO PARA REFRESCAR EL GRID ---
+    ' =====================================================================
+    ' 2. MÉTODO PARA REFRESCAR EL GRID
+    ' =====================================================================
     Private Sub CargarHistorialFull()
         Try
             ConexionBD.Abrir()
 
-            ' 🟢 Consulta SQL modificada en el ORDER BY
-            Dim sql As String = "SELECT a.id AS 'N° Contenedor', e.nombre AS Producto, f.nombre AS Variedad, g.nombre AS Calibre, a.kilos_brutos AS 'Kilos Brutos', a.kilos_netos AS 'Kilos Netos', a.fecha_registro AS Fecha, d.nombre AS Estado " &
-                             "From contenedores a " &
-                             "Join recepciones b On a.recepciones_id = b.id " &
-                             "Join procesos c ON b.id = c.recepciones_id " &
-                             "Join estados_contenedores d ON a.estados_contenedores_id = d.id " &
-                             "Join productos e ON a.productos_id = e.id " &
-                             "Join variedades f ON a.variedades_id = f.id " &
-                             "Join calibres g ON a.calibres_id = g.id " &
-                             "Where c.id = @procid  And (estados_contenedores_id = 2 Or estados_contenedores_id = 3) " &
-                             "Order By CASE WHEN d.nombre = 'Procesado' THEN 1 ELSE 2 END ASC, a.fecha_registro DESC;"
+            ' 🟢 MODIFICACIÓN AQUÍ: Se cambió el JOIN hacia 'procesos' por la tabla 'procesos_recepciones'
+            Dim sql As String =
+                "SELECT a.id AS 'N° Contenedor', a.recepciones_id as Recepcion, i.nombre AS Persona, e.nombre AS Producto, f.nombre AS Variedad, g.nombre AS Calibre, " &
+                "a.kilos_brutos AS 'Kilos Brutos', a.kilos_netos AS 'Kilos Netos', a.fecha_registro AS Fecha, d.nombre AS Estado " &
+                "FROM contenedores a " &
+                "INNER JOIN procesos_recepciones pr ON a.recepciones_id = pr.recepciones_id " &
+                "INNER JOIN estados_contenedores d ON a.estados_contenedores_id = d.id " &
+                "INNER JOIN productos e ON a.productos_id = e.id " &
+                "INNER JOIN variedades f ON a.variedades_id = f.id " &
+                "INNER JOIN calibres g ON a.calibres_id = g.id " &
+                "INNER JOIN recepciones h ON a.recepciones_id = h.id " &
+                "INNER JOIN personas i ON h.personas_id = i.id " &
+                "WHERE pr.procesos_id = @procid AND (a.estados_contenedores_id = 2 OR a.estados_contenedores_id = 3) " &
+                "ORDER BY CASE WHEN d.nombre = 'Procesado' THEN 1 ELSE 2 END ASC, a.fecha_registro DESC;"
 
             Dim da As New MySqlDataAdapter(sql, ConexionBD.conexion)
-            da.SelectCommand.Parameters.AddWithValue("@procId", procesoIdActual)
+            da.SelectCommand.Parameters.AddWithValue("@procid", procesoIdActual)
 
             Dim dt As New DataTable()
             da.Fill(dt)
             dgvHistorico.DataSource = dt
-
-            ' BORRAR BOTON 
-            ' Agregar botón solo una vez
-            ' If Not columnaBotonAgregada Then
-            '  Dim btnCol As New DataGridViewButtonColumn()
-            ' btnCol.Name = "btnAccion"
-            'btnCol.HeaderText = "Acción"
-            'btnCol.Text = "Ver/Editar"
-            'btnCol.UseColumnTextForButtonValue = True
-            'dgvHistorico.Columns.Add(btnCol)
-            'columnaBotonAgregada = True
-            'End If
-
-            ' Pintar las filas según el estado
-
 
         Catch ex As Exception
             MessageBox.Show("Error al cargar historial: " & ex.Message)
@@ -86,7 +76,9 @@ Public Class ucProcesoRegistro
         End Try
     End Sub
 
-    ' --- LÓGICA DE BÚSQUEDA Y VALIDACIÓN ---
+    ' =====================================================================
+    ' 3. LÓGICA DE BÚSQUEDA Y VALIDACIÓN
+    ' =====================================================================
     Private Sub btnBuscar_Click(sender As Object, e As EventArgs) Handles btnBuscar.Click
         ValidarCodigoBarras()
     End Sub
@@ -104,11 +96,12 @@ Public Class ucProcesoRegistro
 
         Try
             ConexionBD.Abrir()
-            ' Buscamos si el ID existe para este proceso
-            Dim sql As String = "SELECT a.id FROM contenedores a " &
-                "INNER JOIN recepciones b ON a.recepciones_id = b.id " &
-                "INNER JOIN procesos c ON b.id = c.recepciones_id " &
-                "WHERE c.id = @procesoid AND a.id = @textodeltxt"
+
+            ' 🟢 MODIFICACIÓN AQUÍ: Cruzamos contenedores directamente con procesos_recepciones
+            Dim sql As String =
+                "SELECT a.id FROM contenedores a " &
+                "INNER JOIN procesos_recepciones pr ON a.recepciones_id = pr.recepciones_id " &
+                "WHERE pr.procesos_id = @procesoid AND a.id = @textodeltxt"
 
             Using cmd As New MySqlCommand(sql, ConexionBD.conexion)
                 cmd.Parameters.AddWithValue("@procesoid", procesoIdActual)
@@ -121,7 +114,7 @@ Public Class ucProcesoRegistro
                     lblEstado.Text = "✅ VÁLIDO: Registro encontrado"
                     lblEstado.ForeColor = Color.Green
                     btnProcesar.Enabled = True
-                    btnProcesar.Focus() ' Opcional: mover foco al botón para que el usuario solo de Enter de nuevo
+                    btnProcesar.Focus() ' Mover foco al botón
                 Else
                     idDetalleValidado = 0
                     lblEstado.Text = "❌ INVÁLIDO: No pertenece al proceso"
@@ -137,7 +130,9 @@ Public Class ucProcesoRegistro
         End Try
     End Sub
 
-    ' --- PROCESAR EL CAMBIO ---
+    ' =====================================================================
+    ' 4. PROCESAR EL CAMBIO
+    ' =====================================================================
     Private Sub btnProcesar_Click(sender As Object, e As EventArgs) Handles btnProcesar.Click
         If idDetalleValidado = 0 Then Return
 
@@ -147,36 +142,37 @@ Public Class ucProcesoRegistro
             ' Iniciamos una transacción para asegurar que ambos UPDATES se completen
             Using transaccion = ConexionBD.conexion.BeginTransaction()
                 Try
-                    ' 1. Consulta para la tabla de procesos
+                    ' 1. Consulta para actualizar el contenedor
                     Dim sqlProceso As String = "UPDATE contenedores SET estados_contenedores_id = 3 WHERE id = @id"
 
-                    ' 2. Consulta para la tabla de detalles (la que quieres agregar)
-                    Dim sqlDetalle As String = "INSERT INTO contenedores_historial (" &    ' --- AQUÍ ESTÁ EL INSERT AL HISTORIAL tipos_movimientos = 4 'Termino de ciclo de Contenedor" , estados_contenedores_id = 3 'Procesado', fecha_movimiento ---
-                                                            "tipos_movimientos_id, tipos_contenedores_id, contenedores_id, " &
-                                                            "tipos_ubicaciones_id, estados_contenedores_id, kilos_brutos, kilos_netos, " &
-                                                            "fecha_movimiento, users_id) " &
-                                                            "SELECT 4, tipos_contenedores_id, id,tipos_ubicaciones_id ,3, kilos_brutos, kilos_netos,NOW(), users_id_registro " &
-                                                            "FROM contenedores " &
-                                                            "WHERE id = @id;"
+                    ' 2. Consulta para insertar en el historial (movimiento 4: Termino ciclo)
+                    Dim sqlDetalle As String =
+                        "INSERT INTO contenedores_historial (" &
+                        "tipos_movimientos_id, tipos_contenedores_id, contenedores_id, " &
+                        "tipos_ubicaciones_id, estados_contenedores_id, kilos_brutos, kilos_netos, " &
+                        "fecha_movimiento, users_id) " &
+                        "SELECT 4, tipos_contenedores_id, id, tipos_ubicaciones_id, 3, kilos_brutos, kilos_netos, NOW(), users_id_registro " &
+                        "FROM contenedores " &
+                        "WHERE id = @id;"
 
-                    ' Ejecutamos el primer UPDATE
+                    ' Ejecutamos actualización
                     Using cmdProceso As New MySqlCommand(sqlProceso, ConexionBD.conexion, transaccion)
                         cmdProceso.Parameters.AddWithValue("@id", idDetalleValidado)
                         cmdProceso.ExecuteNonQuery()
                     End Using
 
-                    ' Ejecutamos el segundo UPDATE (sqlDetalle)
+                    ' Ejecutamos inserción de historial
                     Using cmdDetalle As New MySqlCommand(sqlDetalle, ConexionBD.conexion, transaccion)
                         cmdDetalle.Parameters.AddWithValue("@id", idDetalleValidado)
                         cmdDetalle.ExecuteNonQuery()
                     End Using
 
-                    ' Si llegamos aquí sin errores, confirmamos los cambios en la BD
+                    ' Confirmamos los cambios en la BD
                     transaccion.Commit()
 
                     ' --- UI Y LIMPIEZA ---
                     txtIdRecepcion.Clear()
-                    lblEstado.Text = "Procesado con éxito"
+                    lblEstado.Text = "✅ Procesado con éxito"
                     lblEstado.ForeColor = Color.DarkGreen
                     btnProcesar.Enabled = False
                     idDetalleValidado = 0
@@ -185,7 +181,6 @@ Public Class ucProcesoRegistro
                     txtIdRecepcion.Focus()
 
                 Catch ex As Exception
-                    ' Si algo falla, deshacemos ambos cambios
                     transaccion.Rollback()
                     Throw New Exception("Error en la transacción: " & ex.Message)
                 End Try

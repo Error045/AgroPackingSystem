@@ -30,10 +30,10 @@ Public Class ucUbicacion
                 "   SELECT a.tipos_ubicaciones_id, COUNT(a.id) as Ocupados " &
                 "   FROM contenedores a " &
                 "JOIN tipos_ubicaciones tu ON a.tipos_ubicaciones_id = tu.id " &
-                "   WHERE tu.estado = 1 AND tu.funciones_id IN (5,9) AND tu.id <> 1 " &
+                "   WHERE tu.estado = 1  AND tu.id <> 1 " &
                 "   GROUP BY a.tipos_ubicaciones_id" &
                 ") c ON u.id = c.tipos_ubicaciones_id " &
-                "WHERE u.estado = 1 AND u.funciones_id IN (5,9) AND u.id <> 1"
+                "WHERE u.estado = 1  AND u.id <> 1"
 
             dtUbicaciones = ObtenerDatos(sql) ' Asumo que tienes esta función global
 
@@ -241,27 +241,69 @@ Public Class ucUbicacion
     ' -------------------------------------------------------------------------
 
     Private Sub ImprimirTicketsLote()
-        For Each row As DataGridViewRow In dgvResumen.Rows
-            Dim idContenedor As Integer = Convert.ToInt32(row.Cells("ID_CAL").Value)
+        Try
+            For Each row As DataGridViewRow In dgvResumen.Rows
+                Dim idContenedor As Integer = Convert.ToInt32(row.Cells("ID_CAL").Value)
 
-            ' Consultamos la vista para obtener toda la data cruzada
-            Dim queryView As String = $"SELECT * FROM vw_calibrado_detalles_resumen_tara WHERE codigo = {idContenedor}"
-            Dim dtTicket As DataTable = ObtenerDatos(queryView)
+                ' 🔥 CORRECCIÓN: Se inyecta el idContenedor directamente en la consulta
+                Dim queryView As String =
+                    "SELECT " &
+                    "    a.id AS codigo, " &
+                    "    a.recepciones_id AS recepcion, " &
+                    "    j.tipo AS tipo, " &
+                    "    k.id AS proceso, " &
+                    "    h.nombre AS productor, " &
+                    "    b.nombre AS producto, " &
+                    "    c.nombre AS variedad, " &
+                    "    d.tara AS tara, " &
+                    "    a.kilos_brutos AS bruto, " &
+                    "    a.kilos_netos AS neto, " &
+                    "    a.ciclo AS ciclo, " &
+                    "    g.prefijo AS prefijo, " &
+                    "    i.nombre AS calibre, " &
+                    "    i.numero AS numero, " &
+                    "    l.nombre AS ubicacion, " &
+                    "    a.fecha_registro AS fecha, " &
+                    "    a.hora_registro AS hora, " &
+                    "    f.nombre AS estado " &
+                    "FROM contenedores a " &
+                    "JOIN productos b ON a.productos_id = b.id " &
+                    "JOIN variedades c ON a.variedades_id = c.id " &
+                    "JOIN tipos_contenedores d ON a.tipos_contenedores_id = d.id " &
+                    "JOIN recepciones e ON a.recepciones_id = e.id " &
+                    "JOIN estados_contenedores f ON a.estados_contenedores_id = f.id " &
+                    "LEFT JOIN fases_sistema g ON f.fases_sistema_id = g.id " &
+                    "JOIN personas h ON e.personas_id = h.id " &
+                    "JOIN calibres i ON a.calibres_id = i.id " &
+                    "JOIN tipos_recepciones j ON e.tipos_recepciones_id = j.id " &
+                    "LEFT JOIN procesos_recepciones pr ON e.id = pr.recepciones_id " &
+                    "LEFT JOIN procesos k ON pr.procesos_id = k.id " &
+                    "JOIN tipos_ubicaciones l ON a.tipos_ubicaciones_id = l.id " &
+                    "WHERE a.id = " & idContenedor ' <--- EL PARÁMETRO AHORA SÍ PASA
 
-            If dtTicket IsNot Nothing AndAlso dtTicket.Rows.Count > 0 Then
-                FilaActualImprimir = dtTicket.Rows(0)
+                Dim dtTicket As DataTable = ObtenerDatos(queryView)
 
-                Dim pd As New PrintDocument()
+                If dtTicket IsNot Nothing AndAlso dtTicket.Rows.Count > 0 Then
+                    FilaActualImprimir = dtTicket.Rows(0)
 
-                ' 🔥 AQUÍ ESTÁ LA CORRECCIÓN: AGREGAR EL TAMAÑO Y MÁRGENES QUE SÍ FUNCIONAN 🔥
-                pd.DefaultPageSettings.PaperSize = New Printing.PaperSize("100x150", 394, 590)
-                pd.DefaultPageSettings.Margins = New Printing.Margins(0, 0, 0, 0)
+                    Using pd As New PrintDocument()
+                        pd.DefaultPageSettings.PaperSize = New Printing.PaperSize("100x150", 394, 590)
+                        pd.DefaultPageSettings.Margins = New Printing.Margins(0, 0, 0, 0)
 
-                ' pd.PrinterSettings.PrinterName = "NombreDeTuImpresoraTermica" ' Descomentar si es necesario
-                AddHandler pd.PrintPage, AddressOf PrintDocument_PrintPage
-                pd.Print()
-            End If
-        Next
+                        ' OJO: Si tu impresora térmica NO está configurada como predeterminada en Windows, 
+                        ' DEBES descomentar la siguiente línea y poner su nombre exacto.
+                        ' pd.PrinterSettings.PrinterName = "ZDesigner GC420t" 
+
+                        AddHandler pd.PrintPage, AddressOf PrintDocument_PrintPage
+                        pd.Print()
+                    End Using
+                Else
+                    MessageBox.Show("No se encontró la información cruzada para imprimir el ticket: " & idContenedor, "Aviso", MessageBoxButtons.OK, MessageBoxIcon.Warning)
+                End If
+            Next
+        Catch ex As Exception
+            MessageBox.Show("Error al intentar imprimir: " & ex.Message, "Error de Impresión", MessageBoxButtons.OK, MessageBoxIcon.Error)
+        End Try
     End Sub
 
     Private Sub PrintDocument_PrintPage(sender As Object, e As PrintPageEventArgs)

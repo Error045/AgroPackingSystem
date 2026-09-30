@@ -52,12 +52,13 @@ Public Class ucCalibradoValidacion
     ' 🟢 Modificado: Se quitó el parámetro "idProceso As Integer"
     Private Sub CargarBinesDisponibles()
         Try
-            ' La consulta ahora filtra nativamente por estados_procesos_id = 1 (Procesos activos)
+            ' 🟢 SQL ACTUALIZADO: Incorporada la tabla procesos_recepciones (pr)
             Dim sql As String =
                 "SELECT a.id As 'Codigo', prod.nombre As Producto, v.nombre As Variedad, cal.nombre As Calibre " &
                 "FROM contenedores a " &
-                "INNER JOIN recepciones b ON a.recepciones_id = b.id " &
-                "INNER JOIN procesos c ON b.id = c.recepciones_id " &
+                "JOIN recepciones b ON a.recepciones_id = b.id " &
+                "JOIN procesos_recepciones pr ON b.id = pr.recepciones_id " &
+                "JOIN procesos c ON pr.procesos_id = c.id " &
                 "JOIN productos prod ON a.productos_id = prod.id " &
                 "JOIN variedades v ON a.variedades_id = v.id " &
                 "JOIN calibres cal ON a.calibres_id = cal.id " &
@@ -99,11 +100,12 @@ Public Class ucCalibradoValidacion
 
             If Not Me.DesignMode Then
                 Try
-                    ' Esta consulta ya filtraba correctamente por p.estados_procesos_id = 1, la dejamos igual
+                    ' 🟢 SQL ACTUALIZADO: Incorporada la tabla procesos_recepciones (pr)
                     Dim sql As String = "SELECT c.id, p.id As proceso, prod.nombre As producto, v.nombre As variedad, cal.nombre As calibre, per.nombre As productor " &
                                     "FROM contenedores c " &
                                     "JOIN recepciones r ON c.recepciones_id = r.id " &
-                                    "JOIN procesos p ON r.id = p.recepciones_id " &
+                                    "JOIN procesos_recepciones pr ON r.id = pr.recepciones_id " &
+                                    "JOIN procesos p ON pr.procesos_id = p.id " &
                                     "JOIN personas per ON r.personas_id = per.id " &
                                     "JOIN productos prod ON c.productos_id = prod.id " &
                                     "JOIN variedades v ON c.variedades_id = v.id " &
@@ -148,7 +150,6 @@ Public Class ucCalibradoValidacion
             If filaParaBorrar IsNot Nothing Then
                 ListaValidados.Remove(filaParaBorrar)
 
-
                 CargarBinesDisponibles()
             End If
 
@@ -182,4 +183,5 @@ Public Class ucCalibradoValidacion
     Private Sub txtBusqueda_TextChanged(sender As Object, e As EventArgs) Handles txtBusqueda.TextChanged
 
     End Sub
+
 End Class
