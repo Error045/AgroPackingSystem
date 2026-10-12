@@ -391,4 +391,7 @@ Public Class ucResumen
         dgvResumen.EditMode = DataGridViewEditMode.EditOnEnter
 
     End Sub
+
+
+
 End Class

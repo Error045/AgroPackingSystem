@@ -23,6 +23,9 @@ Partial Class Form1
     <System.Diagnostics.DebuggerStepThrough()>
     Private Sub InitializeComponent()
         Me.pnlMenu = New System.Windows.Forms.Panel()
+        Me.Button3 = New System.Windows.Forms.Button()
+        Me.Button2 = New System.Windows.Forms.Button()
+        Me.Button1 = New System.Windows.Forms.Button()
         Me.btnConfig = New System.Windows.Forms.Button()
         Me.btnDespacho = New System.Windows.Forms.Button()
         Me.btnPallet = New System.Windows.Forms.Button()
@@ -37,14 +40,13 @@ Partial Class Form1
         Me.pnlContenedor = New System.Windows.Forms.Panel()
         Me.btnSimularPeso = New System.Windows.Forms.Button()
         Me.txtSimulador = New System.Windows.Forms.TextBox()
-        Me.Button1 = New System.Windows.Forms.Button()
-        Me.Button2 = New System.Windows.Forms.Button()
-        Me.Button3 = New System.Windows.Forms.Button()
+        Me.btn_reproceso = New System.Windows.Forms.Button()
         Me.pnlMenu.SuspendLayout()
         Me.SuspendLayout()
         '
         'pnlMenu
         '
+        Me.pnlMenu.Controls.Add(Me.btn_reproceso)
         Me.pnlMenu.Controls.Add(Me.Button3)
         Me.pnlMenu.Controls.Add(Me.Button2)
         Me.pnlMenu.Controls.Add(Me.Button1)
@@ -65,6 +67,45 @@ Partial Class Form1
         Me.pnlMenu.Name = "pnlMenu"
         Me.pnlMenu.Size = New System.Drawing.Size(307, 1415)
         Me.pnlMenu.TabIndex = 2
+        '
+        'Button3
+        '
+        Me.Button3.Dock = System.Windows.Forms.DockStyle.Top
+        Me.Button3.FlatStyle = System.Windows.Forms.FlatStyle.Flat
+        Me.Button3.Font = New System.Drawing.Font("Microsoft Sans Serif", 13.8!, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
+        Me.Button3.Location = New System.Drawing.Point(0, 1157)
+        Me.Button3.Margin = New System.Windows.Forms.Padding(3, 2, 3, 2)
+        Me.Button3.Name = "Button3"
+        Me.Button3.Size = New System.Drawing.Size(307, 89)
+        Me.Button3.TabIndex = 19
+        Me.Button3.Text = "RecepcionBloque"
+        Me.Button3.UseVisualStyleBackColor = True
+        '
+        'Button2
+        '
+        Me.Button2.Dock = System.Windows.Forms.DockStyle.Top
+        Me.Button2.FlatStyle = System.Windows.Forms.FlatStyle.Flat
+        Me.Button2.Font = New System.Drawing.Font("Microsoft Sans Serif", 13.8!, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
+        Me.Button2.Location = New System.Drawing.Point(0, 1068)
+        Me.Button2.Margin = New System.Windows.Forms.Padding(3, 2, 3, 2)
+        Me.Button2.Name = "Button2"
+        Me.Button2.Size = New System.Drawing.Size(307, 89)
+        Me.Button2.TabIndex = 18
+        Me.Button2.Text = "Despacho O Repesaje"
+        Me.Button2.UseVisualStyleBackColor = True
+        '
+        'Button1
+        '
+        Me.Button1.Dock = System.Windows.Forms.DockStyle.Top
+        Me.Button1.FlatStyle = System.Windows.Forms.FlatStyle.Flat
+        Me.Button1.Font = New System.Drawing.Font("Microsoft Sans Serif", 13.8!, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
+        Me.Button1.Location = New System.Drawing.Point(0, 979)
+        Me.Button1.Margin = New System.Windows.Forms.Padding(3, 2, 3, 2)
+        Me.Button1.Name = "Button1"
+        Me.Button1.Size = New System.Drawing.Size(307, 89)
+        Me.Button1.TabIndex = 17
+        Me.Button1.Text = "Crear Orden Pallet"
+        Me.Button1.UseVisualStyleBackColor = True
         '
         'btnConfig
         '
@@ -235,44 +276,18 @@ Partial Class Form1
         Me.txtSimulador.Size = New System.Drawing.Size(100, 22)
         Me.txtSimulador.TabIndex = 4
         '
-        'Button1
+        'btn_reproceso
         '
-        Me.Button1.Dock = System.Windows.Forms.DockStyle.Top
-        Me.Button1.FlatStyle = System.Windows.Forms.FlatStyle.Flat
-        Me.Button1.Font = New System.Drawing.Font("Microsoft Sans Serif", 13.8!, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
-        Me.Button1.Location = New System.Drawing.Point(0, 979)
-        Me.Button1.Margin = New System.Windows.Forms.Padding(3, 2, 3, 2)
-        Me.Button1.Name = "Button1"
-        Me.Button1.Size = New System.Drawing.Size(307, 89)
-        Me.Button1.TabIndex = 17
-        Me.Button1.Text = "Crear Orden Pallet"
-        Me.Button1.UseVisualStyleBackColor = True
-        '
-        'Button2
-        '
-        Me.Button2.Dock = System.Windows.Forms.DockStyle.Top
-        Me.Button2.FlatStyle = System.Windows.Forms.FlatStyle.Flat
-        Me.Button2.Font = New System.Drawing.Font("Microsoft Sans Serif", 13.8!, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
-        Me.Button2.Location = New System.Drawing.Point(0, 1068)
-        Me.Button2.Margin = New System.Windows.Forms.Padding(3, 2, 3, 2)
-        Me.Button2.Name = "Button2"
-        Me.Button2.Size = New System.Drawing.Size(307, 89)
-        Me.Button2.TabIndex = 18
-        Me.Button2.Text = "Despacho O Repesaje"
-        Me.Button2.UseVisualStyleBackColor = True
-        '
-        'Button3
-        '
-        Me.Button3.Dock = System.Windows.Forms.DockStyle.Top
-        Me.Button3.FlatStyle = System.Windows.Forms.FlatStyle.Flat
-        Me.Button3.Font = New System.Drawing.Font("Microsoft Sans Serif", 13.8!, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
-        Me.Button3.Location = New System.Drawing.Point(0, 1157)
-        Me.Button3.Margin = New System.Windows.Forms.Padding(3, 2, 3, 2)
-        Me.Button3.Name = "Button3"
-        Me.Button3.Size = New System.Drawing.Size(307, 89)
-        Me.Button3.TabIndex = 19
-        Me.Button3.Text = "Validar previo Bin/Pallet"
-        Me.Button3.UseVisualStyleBackColor = True
+        Me.btn_reproceso.Dock = System.Windows.Forms.DockStyle.Top
+        Me.btn_reproceso.FlatStyle = System.Windows.Forms.FlatStyle.Flat
+        Me.btn_reproceso.Font = New System.Drawing.Font("Microsoft Sans Serif", 13.8!, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
+        Me.btn_reproceso.Location = New System.Drawing.Point(0, 1246)
+        Me.btn_reproceso.Margin = New System.Windows.Forms.Padding(3, 2, 3, 2)
+        Me.btn_reproceso.Name = "btn_reproceso"
+        Me.btn_reproceso.Size = New System.Drawing.Size(307, 89)
+        Me.btn_reproceso.TabIndex = 20
+        Me.btn_reproceso.Text = "ReProceso"
+        Me.btn_reproceso.UseVisualStyleBackColor = True
         '
         'Form1
         '
@@ -310,4 +325,5 @@ Partial Class Form1
     Friend WithEvents Button1 As Button
     Friend WithEvents Button2 As Button
     Friend WithEvents Button3 As Button
+    Friend WithEvents btn_reproceso As Button
 End Class

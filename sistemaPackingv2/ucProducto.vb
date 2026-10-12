@@ -1,52 +1,49 @@
 ﻿Imports MySql.Data.MySqlClient
 
 Public Class ucProducto
-	Private _idRecibido As Integer ' Variable interna para guardar el dato
-	Private Sub ucProducto_Load(sender As Object, e As EventArgs) Handles MyBase.Load
-		Dim sqlProducto As String = "SELECT id, nombre FROM productos"
-		Dim dtProducto As DataTable = ObtenerDatos(sqlProducto) ' Llamada directa al módulo
 
-		cmbProducto.DataSource = dtProducto
-		cmbProducto.DisplayMember = "nombre"
-		cmbProducto.ValueMember = "id"
-		cmbProducto.SelectedIndex = -1 ' Empieza vacío
-	End Sub
-	Private Sub cmbProducto_SelectedIndexChanged(sender As Object, e As EventArgs) Handles cmbProducto.SelectedIndexChanged
-		' Validar que hay una selección real y no es la carga inicial
-		If cmbProducto.SelectedValue IsNot Nothing AndAlso IsNumeric(cmbProducto.SelectedValue) Then
-			Dim id As Integer = Convert.ToInt32(cmbProducto.SelectedValue)
+    Public Event ProductoConfirmado(sender As Object, e As EventArgs)
+    Private Sub ucProducto_Load(sender As Object, e As EventArgs) Handles MyBase.Load
+        Dim sqlProducto As String = "SELECT id, nombre FROM productos"
+        Dim dtProducto As DataTable = ObtenerDatos(sqlProducto)
 
-			' Consulta filtrada
-			Dim sql As String = "SELECT id, nombre FROM variedades WHERE producto_id = @id"
-			Dim v As New MySqlParameter("@id", id)
+        cmbProducto.DataSource = dtProducto
+        cmbProducto.DisplayMember = "nombre"
+        cmbProducto.ValueMember = "id"
+        cmbProducto.SelectedIndex = -1
+    End Sub
 
-			' Llenar segundo combo usando la función del módulo
-			cmbVariedad.DataSource = ObtenerDatos(sql, {v})
-			cmbVariedad.DisplayMember = "nombre"
-			cmbVariedad.ValueMember = "id"
-		End If
+    Private Sub cmbProducto_SelectedIndexChanged(sender As Object, e As EventArgs) Handles cmbProducto.SelectedIndexChanged
+        If cmbProducto.SelectedValue IsNot Nothing AndAlso IsNumeric(cmbProducto.SelectedValue) Then
+            Dim id As Integer = Convert.ToInt32(cmbProducto.SelectedValue)
 
-	End Sub
+            Dim sql As String = "SELECT id, nombre FROM variedades WHERE producto_id = @id"
+            Dim v As New MySqlParameter("@id", id)
 
-	Private Sub btnSiguienteProducto_Click(sender As Object, e As EventArgs) Handles btnSiguienteProducto.Click
+            cmbVariedad.DataSource = ObtenerDatos(sql, {v})
+            cmbVariedad.DisplayMember = "nombre"
+            cmbVariedad.ValueMember = "id"
+        End If
+    End Sub
 
-		If cmbVariedad.SelectedValue IsNot Nothing Then
-			' 1. Acceder al Formulario Principal (Puente de datos)
-			Dim frm = DirectCast(Me.FindForm(), Form1)
+    Private Sub btnSiguienteProducto_Click(sender As Object, e As EventArgs) Handles btnSiguienteProducto.Click
 
-			' 2. Guardar Textos para los Labels (👤, 🥑, 🏷️)
-			frm.NombreProductoGlobal = cmbProducto.Text
-			frm.NombreVariedadGlobal = cmbVariedad.Text
-			' Guardamos IDs (Base de Datos)
-			frm.IdProductoGlobal = CInt(cmbProducto.SelectedValue)
-			frm.IdVariedadGlobal = CInt(cmbVariedad.SelectedValue)
+        If cmbVariedad.SelectedValue IsNot Nothing Then
+            Dim frm = DirectCast(Me.FindForm(), Form1)
 
-			' 4. NAVEGAR al Padre Maestro (ucRecepcion)
-			' Al cargar, ucRecepcion decidirá mostrar el selector automáticamente
-			frm.NavegarA(New ucRecepcion())
-		Else
-			MessageBox.Show("Seleccione una variedad de Producto 🥑 antes de continuar.")
-		End If
+            ' 1. PRIMERO: Guardar variables globales en Form1
+            frm.NombreProductoGlobal = cmbProducto.Text
+            frm.NombreVariedadGlobal = cmbVariedad.Text
+            frm.IdProductoGlobal = CInt(cmbProducto.SelectedValue)
+            frm.IdVariedadGlobal = CInt(cmbVariedad.SelectedValue)
 
-	End Sub
+            ' 2. SEGUNDO: Navegar al siguiente control (ucRecepcion)
+            ' Al cargar ucRecepcion, este se encargará de mostrar el selector
+            frm.NavegarA(New ucRecepcion())
+        Else
+            MessageBox.Show("Seleccione una variedad de Producto 🥑 antes de continuar.", "Aviso", MessageBoxButtons.OK, MessageBoxIcon.Warning)
+        End If
+
+    End Sub
+
 End Class

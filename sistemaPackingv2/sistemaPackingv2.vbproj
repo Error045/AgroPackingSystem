@@ -15,7 +15,7 @@
     <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
     <Deterministic>true</Deterministic>
     <IsWebBootstrapper>false</IsWebBootstrapper>
-    <PublishUrl>D:\Proyectos_sistemas\02_Visual_basic\version Instalable5\</PublishUrl>
+    <PublishUrl>D:\Proyectos_sistemas\02_Visual_basic\version Instalable7RecpBloque\</PublishUrl>
     <Install>true</Install>
     <InstallFrom>Disk</InstallFrom>
     <UpdateEnabled>false</UpdateEnabled>
@@ -25,7 +25,7 @@
     <UpdatePeriodically>false</UpdatePeriodically>
     <UpdateRequired>false</UpdateRequired>
     <MapFileExtensions>true</MapFileExtensions>
-    <ApplicationRevision>24</ApplicationRevision>
+    <ApplicationRevision>27</ApplicationRevision>
     <ApplicationVersion>1.0.0.%2a</ApplicationVersion>
     <UseApplicationTrust>false</UseApplicationTrust>
     <PublishWizardCompleted>true</PublishWizardCompleted>
@@ -270,6 +270,12 @@
     <Compile Include="ucEditarRecepcion.vb">
       <SubType>UserControl</SubType>
     </Compile>
+    <Compile Include="ucImpresionCalibres.Designer.vb">
+      <DependentUpon>ucImpresionCalibres.vb</DependentUpon>
+    </Compile>
+    <Compile Include="ucImpresionCalibres.vb">
+      <SubType>UserControl</SubType>
+    </Compile>
     <Compile Include="ucMostrarProcesoCalibrado.Designer.vb">
       <DependentUpon>ucMostrarProcesoCalibrado.vb</DependentUpon>
     </Compile>
@@ -342,6 +348,12 @@
     <Compile Include="ucNuevoProceso.vb">
       <SubType>UserControl</SubType>
     </Compile>
+    <Compile Include="ucPesajeBloque.Designer.vb">
+      <DependentUpon>ucPesajeBloque.vb</DependentUpon>
+    </Compile>
+    <Compile Include="ucPesajeBloque.vb">
+      <SubType>UserControl</SubType>
+    </Compile>
     <Compile Include="ucPesajePallets.Designer.vb">
       <DependentUpon>ucPesajePallets.vb</DependentUpon>
     </Compile>
@@ -396,16 +408,34 @@
     <Compile Include="ucProducto.vb">
       <SubType>UserControl</SubType>
     </Compile>
+    <Compile Include="ucProductoBloque.Designer.vb">
+      <DependentUpon>ucProductoBloque.vb</DependentUpon>
+    </Compile>
+    <Compile Include="ucProductoBloque.vb">
+      <SubType>UserControl</SubType>
+    </Compile>
     <Compile Include="ucRecepcion.Designer.vb">
       <DependentUpon>ucRecepcion.vb</DependentUpon>
     </Compile>
     <Compile Include="ucRecepcion.vb">
       <SubType>UserControl</SubType>
     </Compile>
+    <Compile Include="ucRecepcionBloque.Designer.vb">
+      <DependentUpon>ucRecepcionBloque.vb</DependentUpon>
+    </Compile>
+    <Compile Include="ucRecepcionBloque.vb">
+      <SubType>UserControl</SubType>
+    </Compile>
     <Compile Include="ucRecepcionEstado.Designer.vb">
       <DependentUpon>ucRecepcionEstado.vb</DependentUpon>
     </Compile>
     <Compile Include="ucRecepcionEstado.vb">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="ucRecepcionEstadoBloque.Designer.vb">
+      <DependentUpon>ucRecepcionEstadoBloque.vb</DependentUpon>
+    </Compile>
+    <Compile Include="ucRecepcionEstadoBloque.vb">
       <SubType>UserControl</SubType>
     </Compile>
     <Compile Include="ucRecepcionFinal.Designer.vb">
@@ -418,6 +448,12 @@
       <DependentUpon>ucReporteFIFO.vb</DependentUpon>
     </Compile>
     <Compile Include="ucReporteFIFO.vb">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="ucReproceso.Designer.vb">
+      <DependentUpon>ucReproceso.vb</DependentUpon>
+    </Compile>
+    <Compile Include="ucReproceso.vb">
       <SubType>UserControl</SubType>
     </Compile>
     <Compile Include="ucResumen.Designer.vb">
@@ -436,6 +472,12 @@
       <DependentUpon>ucDespachoServicio.vb</DependentUpon>
     </Compile>
     <Compile Include="ucDespachoServicio.vb">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="ucSelectorBloque.Designer.vb">
+      <DependentUpon>ucSelectorBloque.vb</DependentUpon>
+    </Compile>
+    <Compile Include="ucSelectorBloque.vb">
       <SubType>UserControl</SubType>
     </Compile>
     <Compile Include="ucTarjado.Designer.vb">
@@ -551,6 +593,9 @@
     <EmbeddedResource Include="ucEditarRecepcion.resx">
       <DependentUpon>ucEditarRecepcion.vb</DependentUpon>
     </EmbeddedResource>
+    <EmbeddedResource Include="ucImpresionCalibres.resx">
+      <DependentUpon>ucImpresionCalibres.vb</DependentUpon>
+    </EmbeddedResource>
     <EmbeddedResource Include="ucMostrarProcesoCalibrado.resx">
       <DependentUpon>ucMostrarProcesoCalibrado.vb</DependentUpon>
     </EmbeddedResource>
@@ -587,6 +632,9 @@
     <EmbeddedResource Include="ucNuevoProceso.resx">
       <DependentUpon>ucNuevoProceso.vb</DependentUpon>
     </EmbeddedResource>
+    <EmbeddedResource Include="ucPesajeBloque.resx">
+      <DependentUpon>ucPesajeBloque.vb</DependentUpon>
+    </EmbeddedResource>
     <EmbeddedResource Include="ucPesajePallets.resx">
       <DependentUpon>ucPesajePallets.vb</DependentUpon>
     </EmbeddedResource>
@@ -614,17 +662,29 @@
     <EmbeddedResource Include="ucProducto.resx">
       <DependentUpon>ucProducto.vb</DependentUpon>
     </EmbeddedResource>
+    <EmbeddedResource Include="ucProductoBloque.resx">
+      <DependentUpon>ucProductoBloque.vb</DependentUpon>
+    </EmbeddedResource>
     <EmbeddedResource Include="ucRecepcion.resx">
       <DependentUpon>ucRecepcion.vb</DependentUpon>
     </EmbeddedResource>
+    <EmbeddedResource Include="ucRecepcionBloque.resx">
+      <DependentUpon>ucRecepcionBloque.vb</DependentUpon>
+    </EmbeddedResource>
     <EmbeddedResource Include="ucRecepcionEstado.resx">
       <DependentUpon>ucRecepcionEstado.vb</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="ucRecepcionEstadoBloque.resx">
+      <DependentUpon>ucRecepcionEstadoBloque.vb</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="ucRecepcionFinal.resx">
       <DependentUpon>ucRecepcionFinal.vb</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="ucReporteFIFO.resx">
       <DependentUpon>ucReporteFIFO.vb</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="ucReproceso.resx">
+      <DependentUpon>ucReproceso.vb</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="ucResumen.resx">
       <DependentUpon>ucResumen.vb</DependentUpon>
@@ -634,6 +694,9 @@
     </EmbeddedResource>
     <EmbeddedResource Include="ucDespachoServicio.resx">
       <DependentUpon>ucDespachoServicio.vb</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="ucSelectorBloque.resx">
+      <DependentUpon>ucSelectorBloque.vb</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="ucTarjado.resx">
       <DependentUpon>ucTarjado.vb</DependentUpon>

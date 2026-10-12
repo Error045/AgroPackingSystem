@@ -10,6 +10,7 @@ Public Class Form1
     Public Property PesoDesdeBascula As Double = 0 ' Esta variable recibirá el dato real
 
 
+
     ' Public Property IdVariedadGlobal As Integer = 0
 
     Public Property NombrePersonaGlobal As String = ""
@@ -28,6 +29,9 @@ Public Class Form1
 
     'Private vistaBarcode As ucPesajeOrden
     'Private vistaPesaje As ucPesaje
+
+    ' Indica si estamos en el flujo normal o en el flujo de múltiples bines
+    Public ModoRecepcionBloque As Boolean = False
 
     ' En Form1.vb
     Public Sub ReiniciarPuerto()
@@ -465,13 +469,43 @@ Public Class Form1
     End Sub
 
     Private Sub Button3_Click(sender As Object, e As EventArgs) Handles Button3.Click
+
         ' 1. Limpiamos el panel central
         pnlContenedor.Controls.Clear()
         ' 2. Instanciamos el UserControl Maestro (tu sala de espera con el DataGridView)
-        ' Dim ucEtiquetasCalibre As New ucEtiquetasCalibre()
+        Dim ucBloque As New ucRecepcionBloque()
         'vistaPaletizado se encargará de buscar en la BD al cargarse.
-        ' ucEtiquetasCalibre.Dock = DockStyle.Fill
-        'pnlContenedor.Controls.Add(ucEtiquetasCalibre)
+        ucBloque.Dock = DockStyle.Fill
+        pnlContenedor.Controls.Add(ucBloque)
+
+        ' Dim frm = DirectCast(Me.FindForm(), Form1)
+
+        ' Encendemos la bandera para el flujo en bloque
+        '  frm.ModoRecepcionBloque = True
+
+        ' Navegamos al mismo primer paso
+        ' frm.NavegarA(New ucRecepcionBloque())
+
+        ' 1. Limpiamos el panel central
+        ' pnlContenedor.Controls.Clear()
+        ' 2. Instanciamos el UserControl Maestro (tu sala de espera con el DataGridView)
+        ' Dim ucImpresionCalibres As New ucImpresionCalibres()
+        'vistaPaletizado se encargará de buscar en la BD al cargarse.
+        '  ucImpresionCalibres.Dock = DockStyle.Fill
+        'pnlContenedor.Controls.Add(ucImpresionCalibres)
+
+
+    End Sub
+
+    Private Sub btn_reproceso_Click(sender As Object, e As EventArgs) Handles btn_reproceso.Click
+
+        ' 1. Limpiamos el panel central
+        pnlContenedor.Controls.Clear()
+        ' 2. Instanciamos el UserControl Maestro (tu sala de espera con el DataGridView)
+        Dim ucReproceso As New ucReproceso()
+        'vistaPaletizado se encargará de buscar en la BD al cargarse.
+        ucReproceso.Dock = DockStyle.Fill
+        pnlContenedor.Controls.Add(ucReproceso)
 
     End Sub
 End Class
